@@ -2,9 +2,11 @@ package gr.hua.dit.studyrooms.controller;
 
 import gr.hua.dit.studyrooms.entity.StudySpace;
 import gr.hua.dit.studyrooms.service.StudySpaceService;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import gr.hua.dit.studyrooms.availability.SpaceAvailabilityService;
@@ -73,7 +75,12 @@ public class StudySpaceController {
 
     @PostMapping("/staff/spaces")
     @PreAuthorize("hasAnyRole('STAFF')")
-    public String createSpace(@ModelAttribute("space") StudySpace space) {
+    public String createSpace(@Valid @ModelAttribute("space") StudySpace space,
+                              BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return "space_form";
+        }
+
         studySpaceService.createSpace(space);
         return "redirect:/staff/spaces";
     }
@@ -88,7 +95,13 @@ public class StudySpaceController {
     @PostMapping("/staff/spaces/{id}")
     @PreAuthorize("hasAnyRole('STAFF')")
     public String updateSpace(@PathVariable Long id,
-                              @ModelAttribute("space") StudySpace space) {
+                              @Valid @ModelAttribute("space") StudySpace space,
+                              BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            space.setId(id);
+            return "space_form";
+        }
+
         studySpaceService.updateSpace(id, space);
         return "redirect:/staff/spaces";
     }

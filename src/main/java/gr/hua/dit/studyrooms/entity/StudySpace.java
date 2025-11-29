@@ -1,6 +1,10 @@
 package gr.hua.dit.studyrooms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.time.LocalTime;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -13,18 +17,25 @@ public class StudySpace {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Name is required")
+    @Size(max = 80, message = "Name must be at most 80 characters")
     @Column(nullable = false, length = 80)
     private String name;
 
+    @Size(max = 500, message = "Description must be at most 500 characters")
     @Column(length = 500)
     private String description;
 
+    @NotNull(message = "Capacity is required")
+    @Positive(message = "Capacity must be positive")
     @Column(nullable = false)
     private Integer capacity;
 
+    @NotNull(message = "Open time is required")
     @Column(nullable = false)
     private LocalTime openTime;
 
+    @NotNull(message = "Close time is required")
     @Column(nullable = false)
     private LocalTime closeTime;
 

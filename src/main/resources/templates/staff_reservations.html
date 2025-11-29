@@ -111,7 +111,7 @@
                     </span>
                 </td>
                 <td>
-                    <form th:if="${r.status} != 'CANCELLED' and ${r.status} != 'CANCELLED_BY_STAFF'"
+                    <form th:if="${r.status} != 'CANCELLED' and r.status != 'CANCELLED_BY_STAFF'"
                           th:action="@{|/staff/reservations/${r.id}/cancel|}"
                           method="post"
                           class="d-inline">

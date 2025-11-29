@@ -2,6 +2,7 @@ package gr.hua.dit.studyrooms.controller.api;
 
 import gr.hua.dit.studyrooms.entity.StudySpace;
 import gr.hua.dit.studyrooms.service.StudySpaceService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +34,7 @@ public class StudySpaceApiController {
     // POST /api/spaces (STAFF)
     @PostMapping
     @PreAuthorize("hasAnyRole('STAFF')")
-    public ResponseEntity<StudySpace> createSpace(@RequestBody StudySpace space) {
+    public ResponseEntity<StudySpace> createSpace(@Valid @RequestBody StudySpace space) {
         return ResponseEntity.ok(studySpaceService.createSpace(space));
     }
 
@@ -41,7 +42,7 @@ public class StudySpaceApiController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('STAFF')")
     public ResponseEntity<StudySpace> updateSpace(@PathVariable Long id,
-                                                  @RequestBody StudySpace space) {
+                                                  @Valid @RequestBody StudySpace space) {
         return ResponseEntity.ok(studySpaceService.updateSpace(id, space));
     }
 
