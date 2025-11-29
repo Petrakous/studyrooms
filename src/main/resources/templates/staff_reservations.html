@@ -111,14 +111,21 @@
                     </span>
                 </td>
                 <td>
-                    <form th:if="${r.status} != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED and
-                                   r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED_BY_STAFF"
-                          th:action="@{|/staff/reservations/${r.id}/cancel|}"
+                    <form th:if="${r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED
+              and r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED_BY_STAFF}"
+                          th:action="@{/staff/reservations/{id}/cancel(id=${r.id})}"
                           method="post"
                           class="d-inline">
+
+                        <!-- CSRF -->
                         <input type="hidden"
                                th:name="${_csrf.parameterName}"
-                               th:value="${_csrf.token}"/>
+                               th:value="${_csrf.token}" />
+
+                        <!-- Στέλνουμε την ημερομηνία φίλτρου πίσω στον controller -->
+                        <input type="hidden" name="date"
+                               th:value="${selectedDate}" />
+
                         <button type="submit"
                                 class="btn btn-sm btn-danger"
                                 onclick="return confirm('Cancel this reservation?');">
@@ -127,7 +134,6 @@
                     </form>
                 </td>
             </tr>
-
             <tr th:if="${#lists.isEmpty(reservations)}">
                 <td colspan="6" class="text-center text-muted">
                     No reservations found for the selected criteria.

@@ -50,9 +50,9 @@
                 </td>
                 <td>
                     <!-- ο φοιτητής δεν μπορεί να ακυρώσει αν είναι ήδη CANCELLED ή CANCELLED_BY_STAFF -->
-                    <form th:if="${r.status} != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED and
-                                   r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED_BY_STAFF"
-                          th:action="@{|/reservations/${r.id}/cancel|}"
+                    <form th:if="${r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED
+          and r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED_BY_STAFF}"
+                          th:action="@{/reservations/{id}/cancel(id=${r.id})}"
                           method="post"
                           class="d-inline">
                         <input type="hidden"
