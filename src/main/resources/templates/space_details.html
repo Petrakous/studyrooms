@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Space Details - StudyRooms')}"></head>
+
+<body th:replace="~{layout :: body('spaces', ~{::content})}">
+<div th:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0" th:text="${space.name}">Space name</h2>
+        <a th:href="@{/spaces}" class="btn btn-secondary btn-sm">
+            Back to Spaces
+        </a>
+    </div>
+
+    <p th:text="${space.description}">Description</p>
+
+    <p class="mb-4">
+        Capacity:
+        <span th:text="${space.capacity}">10</span>
+        <br>
+        Open:
+        <span th:text="${space.openTime}">08:00</span>
+        -
+        <span th:text="${space.closeTime}">20:00</span>
+    </p>
+
+    <!-- Date selector -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form th:action="@{|/spaces/${space.id}|}" method="get"
+                  class="row g-2 align-items-end">
+                <div class="col-auto">
+                    <label for="date" class="form-label mb-0">Select date</label>
+                    <input id="date" type="date" name="date"
+                           th:value="${selectedDate}"
+                           class="form-control">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">
+                        Show availability
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Daily availability table -->
+    <h4 class="h5 mb-3">
+        Availability for <span th:text="${selectedDate}">2025-01-01</span>
+    </h4>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead class="table-light">
+            <tr>
+                <th style="width: 180px;">Time slot</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            <tr th:each="slot : ${slots}">
+                <td>
+                    <span th:text="${slot.start}">09:00</span>
+                    -
+                    <span th:text="${slot.end}">09:30</span>
+                </td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${slot.booked} ? ' bg-danger' : ' bg-success'">
+                        <span th:text="${slot.booked} ? 'Booked' : 'Available'">Available</span>
+                    </span>
+                </td>
+            </tr>
+
+            <tr th:if="${#lists.isEmpty(slots)}">
+                <td colspan="2" class="text-center text-muted">
+                    No availability data for this date.
+                </td>
+            </tr>
+
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</body>
+</html>

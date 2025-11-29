@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Login - StudyRooms')}"></head>
+
+<body th:replace="~{layout :: body('', ~{::content})}">
+<div th:fragment="content">
+
+    <div class="row justify-content-center my-5">
+        <div class="col-md-6 col-lg-4">
+
+            <h2 class="mb-4 text-center">Login</h2>
+
+            <!-- Μήνυμα λάθους (π.χ. Spring Security ?error) -->
+            <div th:if="${param.error}" class="alert alert-danger">
+                Invalid username or password.
+            </div>
+
+            <!-- Μήνυμα επιτυχούς logout (π.χ. ?logout) -->
+            <div th:if="${param.logout}" class="alert alert-success">
+                You have been logged out successfully.
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form th:action="@{/login}" method="post">
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input id="username" type="text" name="username"
+                                   class="form-control" required autofocus>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input id="password" type="password" name="password"
+                                   class="form-control" required>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                Login
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr>
+
+                    <p class="mb-0 text-center">
+                        Don't have an account?
+                        <a th:href="@{/register}">Register</a>
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Register - StudyRooms')}"></head>
+
+<body th:replace="~{layout :: body('', ~{::content})}">
+<div th:fragment="content">
+
+    <div class="row justify-content-center my-5">
+        <div class="col-md-6 col-lg-5">
+
+            <h2 class="mb-4 text-center">Create Account</h2>
+
+            <!-- Global error -->
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form th:action="@{/register}" method="post" th:object="${user}">
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input id="username" type="text" th:field="*{username}"
+                                   class="form-control" required>
+                            <div class="text-danger small" th:errors="*{username}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input id="password" type="password" th:field="*{password}"
+                                   class="form-control" required>
+                            <div class="text-danger small" th:errors="*{password}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                            <input id="confirmPassword" type="password" th:field="*{confirmPassword}"
+                                   class="form-control" required>
+                            <div class="text-danger small" th:errors="*{confirmPassword}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="fullName" class="form-label">Full Name</label>
+                            <input id="fullName" type="text" th:field="*{fullName}"
+                                   class="form-control" required>
+                            <div class="text-danger small" th:errors="*{fullName}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input id="email" type="email" th:field="*{email}"
+                                   class="form-control" required>
+                            <div class="text-danger small" th:errors="*{email}"></div>
+                        </div>
+
+                        <div class="d-grid mt-3">
+                            <button type="submit" class="btn btn-success">
+                                Register
+                            </button>
+                        </div>
+
+                    </form>
+
+                    <hr>
+
+                    <p class="mb-0 text-center">
+                        Already have an account?
+                        <a th:href="@{/login}">Login</a>
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

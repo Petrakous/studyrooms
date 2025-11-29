@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Home - StudyRooms')}"></head>
+
+<body th:replace="~{layout :: body('', ~{::content})}">
+<div th:fragment="content">
+
+    <!-- HERO SECTION -->
+    <section class="py-5 px-3 px-md-5 mb-4 rounded-4"
+             style="background: linear-gradient(135deg, #0d6efd, #6610f2); color: #fff;">
+        <div class="row align-items-center">
+            <div class="col-lg-7 mb-4 mb-lg-0">
+                <h1 class="display-5 fw-bold mb-3">Welcome to StudyRooms</h1>
+                <p class="lead mb-4">
+                    Book study spaces quickly and easily. See availability, manage your
+                    reservations and keep your study time organized.
+                </p>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <a th:href="@{/dashboard}" class="btn btn-light btn-lg">
+                        Go to Dashboard
+                    </a>
+                    <a th:href="@{/spaces}" class="btn btn-outline-light btn-lg">
+                        View Spaces
+                    </a>
+                    <a th:href="@{/login}" class="btn btn-outline-light btn-lg">
+                        Login / Register
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="bg-white text-dark rounded-4 shadow-sm p-3">
+                    <h5 class="mb-3 text-center">Today at a glance</h5>
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Upcoming reservations</span>
+                            <span class="fw-semibold"
+                                  th:text="${stats != null} ? ${stats.upcomingReservations} : '—'">—</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Spaces available now</span>
+                            <span class="fw-semibold"
+                                  th:text="${stats != null} ? ${stats.spacesAvailableNow} : '—'">—</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Total reservations today</span>
+                            <span class="fw-semibold"
+                                  th:text="${stats != null} ? ${stats.totalReservationsToday} : '—'">—</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="mb-4">
+        <h2 class="h4 mb-3 text-center">How it works</h2>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">1. Browse spaces</h5>
+                        <p class="card-text">
+                            See all available study rooms, their capacity and opening hours.
+                        </p>
+                        <a th:href="@{/spaces}" class="btn btn-outline-primary btn-sm">
+                            View Spaces
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">2. Create a reservation</h5>
+                        <p class="card-text">
+                            Choose date and time that fits you and instantly create a reservation.
+                        </p>
+                        <a th:href="@{/reservations/new}" class="btn btn-outline-primary btn-sm">
+                            New Reservation
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">3. Manage your bookings</h5>
+                        <p class="card-text">
+                            View upcoming reservations, cancel or rebook when your plans change.
+                        </p>
+                        <a th:href="@{/reservations/my}" class="btn btn-outline-primary btn-sm">
+                            My Reservations
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+</body>
+</html>
