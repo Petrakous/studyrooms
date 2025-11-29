@@ -3,6 +3,8 @@ package gr.hua.dit.studyrooms.controller.api;
 import gr.hua.dit.studyrooms.dto.UserRegistrationDto;
 import gr.hua.dit.studyrooms.entity.User;
 import gr.hua.dit.studyrooms.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +18,7 @@ import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Auth", description = "Authentication and registration endpoints")
 public class AuthApiController {
 
     private final UserService userService;
@@ -30,6 +33,7 @@ public class AuthApiController {
         this.jwtService = jwtService;
     }
 
+    @Operation(summary = "Register a new student account")
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody UserRegistrationDto dto) {
         try {
@@ -40,6 +44,7 @@ public class AuthApiController {
         }
     }
 
+    @Operation(summary = "Authenticate with username and password to receive a JWT")
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDto request) {
         try {
