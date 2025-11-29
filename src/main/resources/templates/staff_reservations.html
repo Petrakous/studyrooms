@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout :: head('All Reservations (Staff) - StudyRooms')}"></head>
+<head th:replace="~{layout :: head('All Reservations (Staff) - StudyRooms')}">
+    <title>All Reservations (Staff) - StudyRooms</title>
+</head>
 
 <body th:replace="~{layout :: body('', ~{::content})}">
 <div th:fragment="content">
@@ -47,8 +49,8 @@
                        th:value="${_csrf.token}"/>
 
                 <div class="col-md-4">
-                    <label class="form-label mb-0">Space</label>
-                    <select name="spaceId" class="form-select" required>
+                    <label for="spaceId" class="form-label mb-0">Space</label>
+                    <select id="spaceId" name="spaceId" class="form-select" required>
                         <option value="" disabled selected>Select space</option>
                         <option th:each="s : ${spaces}"
                                 th:value="${s.id}"
@@ -58,8 +60,8 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label mb-0">Date</label>
-                    <input type="date" name="date"
+                    <label for="closeDate" class="form-label mb-0">Date</label>
+                    <input id="closeDate" type="date" name="date"
                            th:value="${selectedDate}"
                            class="form-control" required/>
                 </div>
