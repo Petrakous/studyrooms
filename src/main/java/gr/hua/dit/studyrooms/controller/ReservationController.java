@@ -6,11 +6,13 @@ import gr.hua.dit.studyrooms.entity.User;
 import gr.hua.dit.studyrooms.security.CustomUserDetails;
 import gr.hua.dit.studyrooms.service.ReservationService;
 import gr.hua.dit.studyrooms.service.StudySpaceService;
+import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -48,9 +50,15 @@ public class ReservationController {
     }
 
     @PostMapping("/reservations")
-    public String createReservation(@ModelAttribute("form") ReservationFormDto form,
+    public String createReservation(@Valid @ModelAttribute("form") ReservationFormDto form,
+                                    BindingResult bindingResult,
                                     Authentication auth,
                                     Model model) {
+
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("spaces", studySpaceService.getAllSpaces());
+            return "reservation_form";
+        }
 
         CustomUserDetails cud = (CustomUserDetails) auth.getPrincipal();
         User user = cud.getUser();

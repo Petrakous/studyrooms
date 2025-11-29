@@ -3,12 +3,14 @@ package gr.hua.dit.studyrooms.controller;
 import gr.hua.dit.studyrooms.dto.UserRegistrationDto;
 import gr.hua.dit.studyrooms.entity.User;
 import gr.hua.dit.studyrooms.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
@@ -35,8 +37,13 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String registerUser(@ModelAttribute("user") UserRegistrationDto dto,
+    public String registerUser(@Valid @ModelAttribute("user") UserRegistrationDto dto,
+                               BindingResult bindingResult,
                                Model model) {
+        if (bindingResult.hasErrors()) {
+            return "register";
+        }
+
         try {
             User saved = userService.registerStudent(dto);
 

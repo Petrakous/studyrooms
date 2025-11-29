@@ -5,6 +5,7 @@ import gr.hua.dit.studyrooms.entity.Reservation;
 import gr.hua.dit.studyrooms.entity.User;
 import gr.hua.dit.studyrooms.security.CustomUserDetails;
 import gr.hua.dit.studyrooms.service.ReservationService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +33,7 @@ public class ReservationApiController {
 
     // POST /api/reservations
     @PostMapping
-    public ResponseEntity<?> createReservation(@RequestBody ReservationFormDto form,
+    public ResponseEntity<?> createReservation(@Valid @RequestBody ReservationFormDto form,
                                                Authentication auth) {
         CustomUserDetails cud = (CustomUserDetails) auth.getPrincipal();
         User user = cud.getUser();

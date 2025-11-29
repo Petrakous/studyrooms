@@ -3,6 +3,7 @@ package gr.hua.dit.studyrooms.controller.api;
 import gr.hua.dit.studyrooms.dto.UserRegistrationDto;
 import gr.hua.dit.studyrooms.entity.User;
 import gr.hua.dit.studyrooms.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import gr.hua.dit.studyrooms.dto.LoginRequestDto;
@@ -30,7 +31,7 @@ public class AuthApiController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody UserRegistrationDto dto) {
+    public ResponseEntity<?> register(@Valid @RequestBody UserRegistrationDto dto) {
         try {
             User user = userService.registerStudent(dto);
             return ResponseEntity.ok(user.getUsername());
@@ -40,7 +41,7 @@ public class AuthApiController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDto request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDto request) {
         try {
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
