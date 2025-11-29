@@ -1,13 +1,24 @@
 package gr.hua.dit.studyrooms.dto;
 
+import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 public class ReservationFormDto {
 
+    @NotNull(message = "Study space is required")
     private Long studySpaceId;
+
+    @NotNull(message = "Date is required")
+    @FutureOrPresent(message = "Reservation date cannot be in the past")
     private LocalDate date;
+
+    @NotNull(message = "Start time is required")
     private LocalTime startTime;
+
+    @NotNull(message = "End time is required")
     private LocalTime endTime;
 
     public ReservationFormDto() {

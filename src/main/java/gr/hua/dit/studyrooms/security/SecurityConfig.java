@@ -2,18 +2,18 @@ package gr.hua.dit.studyrooms.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.config.http.SessionCreationPolicy;
-
 
 @Configuration
 @EnableWebSecurity
@@ -26,13 +26,11 @@ public class SecurityConfig {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
-    // encoder για τα passwords
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // χρειάζεται αν αργότερα κάνουμε manual authentication (π.χ. JWT)
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration) throws Exception {
@@ -40,65 +38,66 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
+    @Order(1)
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                // CSRF: το κρατάμε ενεργό, αλλά αγνοούμε κάποια paths (h2, api)
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/h2-console/**", "/api/**")
-                )
-
-                // δικαιώματα πρόσβασης
+                .securityMatcher("/api/**")
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/", "/home",
-                                "/login", "/register",
-                                "/css/**", "/js/**", "/images/**",
-                                "/h2-console/**",
-                                "/spaces", "/spaces/**"
+                                "/api/auth/login",
+                                "/api/auth/register",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
                         ).permitAll()
-
-                        .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
-
-                        .requestMatchers("/staff/**").hasAnyRole("STAFF")
-
-                        // προσωρινά: τα /api/** τα αφήνουμε authenticated με session.
-                        // Αργότερα θα βάλουμε JWT.
-                        .requestMatchers("/api/**").authenticated()
-
                         .anyRequest().authenticated()
                 )
+                .formLogin(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
+    public SecurityFilterChain mvcSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/h2-console/**")
                 )
-
-                // φόρμα login
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/",
+                                "/home",
+                                "/login",
+                                "/register",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/h2-console/**",
+                                "/spaces",
+                                "/spaces/**"
+                        ).permitAll()
+                        .requestMatchers("/staff/**").hasAnyRole("STAFF")
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .formLogin(form -> form
                         .loginPage("/login")
                         .permitAll()
-                        // μετά το login, πού πάει ο χρήστης
                         .defaultSuccessUrl("/dashboard", true)
                 )
-
-                // logout
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
                         .permitAll()
                 )
+                .exceptionHandling(ex -> ex.accessDeniedPage("/access-denied"))
+                .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
-                // 👉👉 ΕΔΩ προσθέτουμε το Access Denied page
-                .exceptionHandling(ex -> ex
-                        .accessDeniedPage("/access-denied")
-                )
-
-                // για να δουλεύει το H2 console (frames)
-                .headers(headers -> headers
-                        .frameOptions(frame -> frame.disable())
-                );
-
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }
