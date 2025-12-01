@@ -76,6 +76,7 @@ public class SecurityConfig {
                                 "/register",
                                 "/css/**",
                                 "/js/**",
+                                "/spa/**",
                                 "/images/**",
                                 "/h2-console/**",
                                 "/spaces",

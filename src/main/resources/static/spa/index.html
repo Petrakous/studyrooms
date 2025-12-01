@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyRooms SPA</title>
+    <link rel="stylesheet" href="/css/spa.css">
+</head>
+<body>
+<div class="app">
+    <header>
+        <h1>StudyRooms SPA</h1>
+        <p class="muted">Single-page client consuming the JWT-secured REST API.</p>
+    </header>
+
+    <section class="card" id="auth-card">
+        <h2>1. Authenticate</h2>
+        <form id="login-form">
+            <div class="field">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="actions">
+                <button type="submit">Sign in &amp; Get Token</button>
+                <span id="token-status" class="pill pill-muted">No token</span>
+            </div>
+        </form>
+        <p class="hint">The token is kept in-memory (session only). Refresh the page to clear it.</p>
+        <pre id="login-error" class="error hidden"></pre>
+    </section>
+
+    <section class="card" id="spaces-card">
+        <div class="card-header">
+            <h2>2. Spaces</h2>
+            <button id="reload-spaces" type="button">Reload</button>
+        </div>
+        <p class="muted">Lists all study spaces using <code>GET /api/spaces</code>.</p>
+        <div id="spaces-list" class="list">Sign in first.</div>
+        <pre id="spaces-error" class="error hidden"></pre>
+    </section>
+
+    <section class="card" id="reservation-card">
+        <h2>3. Create a reservation</h2>
+        <p class="muted">Posts to <code>POST /api/reservations</code> using the Bearer token.</p>
+        <form id="reservation-form">
+            <div class="field">
+                <label for="space-select">Study space</label>
+                <select id="space-select" name="studySpaceId" required>
+                    <option value="" disabled selected>Select a space</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="date">Date</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+            <div class="field inline">
+                <div>
+                    <label for="start-time">Start</label>
+                    <input type="time" id="start-time" name="startTime" required>
+                </div>
+                <div>
+                    <label for="end-time">End</label>
+                    <input type="time" id="end-time" name="endTime" required>
+                </div>
+            </div>
+            <div class="actions">
+                <button type="submit">Create</button>
+                <span id="reservation-status" class="pill pill-muted">Waiting</span>
+            </div>
+        </form>
+        <pre id="reservation-error" class="error hidden"></pre>
+    </section>
+
+    <section class="card" id="my-reservations-card">
+        <div class="card-header">
+            <h2>4. My reservations</h2>
+            <button id="reload-reservations" type="button">Reload</button>
+        </div>
+        <p class="muted">Uses <code>GET /api/reservations/my</code> and allows cancelling.</p>
+        <div id="reservations-list" class="list">Sign in first.</div>
+        <pre id="reservations-error" class="error hidden"></pre>
+    </section>
+</div>
+<script src="/js/spa.js"></script>
+</body>
+</html>
