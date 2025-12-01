@@ -41,8 +41,10 @@
     <div th:if="${selectedSpace == null}">
         <div class="alert alert-info">Select a study space to view occupancy.</div>
     </div>
+
     <div th:if="${selectedSpace != null}">
-        <h5 class="mb-3" th:text="${rangeLabel}">Room</h5>
+        <h5 class="mb-3" th:text="${selectedSpace.name} + ' (' + startDate + ' to ' + endDate + ')'">Room</h5>
+
         <div class="table-responsive">
             <table class="table table-striped align-middle">
                 <thead class="table-light">

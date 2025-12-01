@@ -2,7 +2,7 @@ package gr.hua.dit.studyrooms.controller;
 
 import gr.hua.dit.studyrooms.dto.ReservationFormDto;
 import gr.hua.dit.studyrooms.dto.UserRegistrationDto;
-import gr.hua.dit.studyrooms.entity.StudySpace;
+import gr.hua.dit.studyrooms.dto.StudySpaceDto;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -40,7 +40,7 @@ public class WebExceptionHandler {
         if (target instanceof ReservationFormDto) {
             return "reservation_form";
         }
-        if (target instanceof StudySpace) {
+        if (target instanceof StudySpaceDto) {
             return "space_form";
         }
         return "error";

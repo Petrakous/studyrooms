@@ -74,7 +74,7 @@ public class ReservationServiceImpl implements ReservationService {
         checkOpeningHours(space, startTime, endTime);
         checkDurationWithinLimit(startTime, endTime);
         checkOverlap(space, date, startTime, endTime, activeStatuses);
-        checkCapacity(space, date);
+        checkCapacity(space, date, activeStatuses);
 
         return persistReservation(user, space, date, startTime, endTime);
     }
@@ -120,6 +120,10 @@ public class ReservationServiceImpl implements ReservationService {
                 r.setStatus(ReservationStatus.CANCELLED_BY_STAFF);
                 cancelled++;
             }
+        }
+
+        if (cancelled > 0) {
+            reservationRepository.saveAll(reservations);
         }
 
         return cancelled;
@@ -199,9 +203,9 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
-    private void checkCapacity(StudySpace space, LocalDate date) {
-        List<Reservation> reservationsForSpaceAndDate = reservationRepository.findByStudySpaceAndDate(space, date);
-        if (reservationsForSpaceAndDate.size() >= space.getCapacity()) {
+    private void checkCapacity(StudySpace space, LocalDate date, List<ReservationStatus> activeStatuses) {
+        long activeCount = reservationRepository.countByStudySpaceAndDateAndStatusIn(space, date, activeStatuses);
+        if (activeCount >= space.getCapacity()) {
             throw new IllegalStateException("No available seats for this study space on this date");
         }
     }
@@ -218,30 +222,5 @@ public class ReservationServiceImpl implements ReservationService {
         reservation.setStatus(ReservationStatus.CONFIRMED);
 
         return reservationRepository.save(reservation);
-    }
-
-    @Override
-    public void markNoShow(Long reservationId) {
-
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
-
-        User user = reservation.getUser();
-
-        // Μόνο αν η κράτηση δεν είναι ήδη cancelled ή ήδη NO_SHOW
-        if (reservation.getStatus() == ReservationStatus.CANCELLED
-                || reservation.getStatus() == ReservationStatus.CANCELLED_BY_STAFF
-                || reservation.getStatus() == ReservationStatus.NO_SHOW) {
-            return;
-        }
-
-        // 3 ημέρες penalty από σήμερα
-        user.setPenaltyUntil(LocalDate.now().plusDays(3));
-
-        // Μαρκάρουμε την κράτηση ως NO_SHOW
-        reservation.setStatus(ReservationStatus.NO_SHOW);
-
-        reservationRepository.save(reservation);
-        userRepository.save(user);
     }
 }

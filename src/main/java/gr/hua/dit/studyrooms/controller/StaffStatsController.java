@@ -10,7 +10,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import java.time.format.DateTimeFormatter;
 
 import java.time.LocalDate;
 
@@ -37,8 +36,8 @@ public class StaffStatsController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             Model model) {
 
-        LocalDate effectiveStart = (startDate != null) ? startDate : LocalDate.now();
-        LocalDate effectiveEnd = (endDate != null) ? endDate : effectiveStart.plusDays(6);
+        LocalDate effectiveStart = startDate != null ? startDate : LocalDate.now();
+        LocalDate effectiveEnd = endDate != null ? endDate : effectiveStart.plusDays(6);
 
         model.addAttribute("spaces", studySpaceService.getAllSpaces());
         model.addAttribute("startDate", effectiveStart);
@@ -48,26 +47,12 @@ public class StaffStatsController {
             try {
                 StudySpace space = studySpaceService.getSpaceById(spaceId);
                 model.addAttribute("selectedSpace", space);
-                model.addAttribute("stats",
-                        reservationStatisticsService.getDailyOccupancy(space, effectiveStart, effectiveEnd));
-
-                // 🔥 Formatted range label (dd/MM/yyyy → dd/MM/yyyy)
-                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-                String rangeLabel = space.getName()
-                        + " (" + effectiveStart.format(fmt)
-                        + " → " + effectiveEnd.format(fmt)
-                        + ")";
-                model.addAttribute("rangeLabel", rangeLabel);
-
+                model.addAttribute("stats", reservationStatisticsService.getDailyOccupancy(space, effectiveStart, effectiveEnd));
             } catch (RuntimeException ex) {
                 model.addAttribute("error", ex.getMessage());
             }
-        } else {
-            model.addAttribute("selectedSpace", null);
         }
 
         return "staff_occupancy";
     }
-
-
 }

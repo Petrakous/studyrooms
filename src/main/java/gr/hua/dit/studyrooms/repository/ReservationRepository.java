@@ -71,4 +71,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             @Param("statuses") Collection<ReservationStatus> statuses
     );
 
+    long countByStudySpaceAndDateAndStatusIn(StudySpace space,
+                                             LocalDate date,
+                                             Collection<ReservationStatus> statuses);
+
 }
