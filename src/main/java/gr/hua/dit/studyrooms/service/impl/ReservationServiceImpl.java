@@ -29,6 +29,7 @@ public class ReservationServiceImpl implements ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final StudySpaceRepository studySpaceRepository;
+    private final UserRepository userRepository;
     private final HolidayApiPort holidayApiPort;
     private final NotificationService notificationService;
 
@@ -38,9 +39,11 @@ public class ReservationServiceImpl implements ReservationService {
                                   NotificationService notificationService) {
         this.reservationRepository = reservationRepository;
         this.studySpaceRepository = studySpaceRepository;
+        this.userRepository = userRepository;
         this.holidayApiPort = holidayApiPort;
         this.notificationService = notificationService;
     }
+
 
     @Override
     public List<Reservation> getReservationsForUser(User user) {
