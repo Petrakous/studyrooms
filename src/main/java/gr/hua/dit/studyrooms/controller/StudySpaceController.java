@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import gr.hua.dit.studyrooms.availability.TimeSlotAvailability;
 
 import gr.hua.dit.studyrooms.availability.SpaceAvailabilityService;
 import gr.hua.dit.studyrooms.availability.TimeSlotView;
@@ -40,15 +41,14 @@ public class StudySpaceController {
     @GetMapping("/spaces/{id}")
     public String spaceDetails(@PathVariable Long id,
                                @RequestParam(value = "date", required = false)
-                               @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-                               LocalDate date,
+                               @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
                                Model model) {
 
         StudySpace space = studySpaceService.getSpaceById(id);
 
         LocalDate selectedDate = (date != null) ? date : LocalDate.now();
 
-        List<TimeSlotView> slots =
+        List<TimeSlotAvailability> slots =
                 spaceAvailabilityService.getDailyAvailability(space, selectedDate);
 
         model.addAttribute("space", space);

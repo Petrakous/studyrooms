@@ -75,9 +75,7 @@ public class ReservationController {
 
         } catch (Exception e) {
             bindingResult.reject("reservationError", e.getMessage());
-            model.addAttribute("form", form);
             model.addAttribute("spaces", studySpaceService.getAllSpaces());
-            model.addAttribute("error", e.getMessage());
             return "reservation_form";
         }
     }
