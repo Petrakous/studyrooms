@@ -44,6 +44,15 @@
                     </a>
                 </li>
 
+                <!-- Staff occupancy stats -->
+                <li class="nav-item" th:if="${#authorization.expression('hasRole(''STAFF'')')}">
+                    <a class="nav-link"
+                       th:href="@{/staff/occupancy}"
+                       th:classappend="${activePage} == 'staff-occupancy' ? ' active' : ''">
+                        Occupancy
+                    </a>
+                </li>
+
                 <!-- My Reservations -->
                 <li class="nav-item">
                     <a class="nav-link"
