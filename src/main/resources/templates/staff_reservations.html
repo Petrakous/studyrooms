@@ -15,26 +15,23 @@
     <!-- Flash message after close-space action -->
     <div th:if="${message}" class="alert alert-info" th:text="${message}"></div>
 
-    <!-- Filter by date -->
+    <!-- Filter by date (single date, auto-submit on change) -->
     <form th:action="@{/staff/reservations}" method="get"
           class="row g-2 align-items-end mb-3">
 
         <div class="col-auto">
-            <label for="date" class="form-label mb-0">Filter by date</label>
+            <label for="date" class="form-label mb-0">Date</label>
             <input id="date" type="date" name="date"
                    th:value="${selectedDate}"
-                   class="form-control">
+                   class="form-control"
+                   onchange="this.form.submit()">
         </div>
 
         <div class="col-auto">
-            <button type="submit" class="btn btn-primary">
-                Filter
-            </button>
-        </div>
-
-        <div class="col-auto">
-            <a th:href="@{/staff/reservations}" class="btn btn-outline-secondary">
-                Clear
+            <label class="form-label mb-0">&nbsp;</label>
+            <!-- Clear → Today -->
+            <a th:href="@{/staff/reservations}" class="btn btn-outline-secondary d-block">
+                Today
             </a>
         </div>
     </form>
@@ -49,7 +46,11 @@
                        th:name="${_csrf.parameterName}"
                        th:value="${_csrf.token}"/>
 
-                <div class="col-md-4">
+                <!-- στέλνουμε τη selectedDate ως hidden, αλλά ΔΕΝ πιάνει columns -->
+                <input type="hidden" name="date" th:value="${selectedDate}"/>
+
+                <!-- Space select -->
+                <div class="col-md-6 col-lg-4">
                     <label for="spaceId" class="form-label mb-0">Space</label>
                     <select id="spaceId" name="spaceId" class="form-select" required>
                         <option value="" disabled selected>Select space</option>
@@ -60,14 +61,8 @@
                     </select>
                 </div>
 
-                <div class="col-md-3">
-                    <label for="closeDate" class="form-label mb-0">Date</label>
-                    <input id="closeDate" type="date" name="date"
-                           th:value="${selectedDate}"
-                           class="form-control" required/>
-                </div>
-
-                <div class="col-md-3">
+                <!-- Button δίπλα στο select -->
+                <div class="col-md-6 col-lg-3">
                     <label class="form-label mb-0">&nbsp;</label>
                     <button type="submit" class="btn btn-danger w-100"
                             onclick="return confirm('Close this space for the selected date and cancel all reservations?');">
@@ -88,7 +83,7 @@
                 <th>Date</th>
                 <th>Time</th>
                 <th>Status</th>
-                <th style="width: 140px;">Actions</th>
+                <th class="text-center" style="width: 180px;">Actions</th>
             </tr>
             </thead>
 
@@ -108,35 +103,55 @@
                           th:classappend="${r.status} == 'CONFIRMED' ? ' bg-success' :
                                           (${r.status} == 'PENDING' ? ' bg-warning text-dark' :
                                            (${r.status} == 'CANCELLED' ? ' bg-secondary' :
-                                            (${r.status} == 'CANCELLED_BY_STAFF' ? ' bg-danger' : ' bg-light text-dark')))"
+                                            (${r.status} == 'CANCELLED_BY_STAFF' ? ' bg-danger' : ' bg-light text-dark'))) "
                           th:text="${r.status}">
                         CONFIRMED
                     </span>
                 </td>
-                <td>
-                    <form th:if="${r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED
-              and r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED_BY_STAFF}"
-                          th:action="@{/staff/reservations/{id}/cancel(id=${r.id})}"
-                          method="post"
-                          class="d-inline">
 
-                        <!-- CSRF -->
-                        <input type="hidden"
-                               th:name="${_csrf.parameterName}"
-                               th:value="${_csrf.token}" />
+                <!-- Actions column -->
+                <td class="text-center">
+                    <div class="d-inline-flex justify-content-between flex-nowrap gap-2">
 
-                        <!-- Στέλνουμε την ημερομηνία φίλτρου πίσω στον controller -->
-                        <input type="hidden" name="date"
-                               th:value="${selectedDate}" />
+                        <!-- Cancel -->
+                        <form th:if="${r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED
+                              and r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED_BY_STAFF
+                              and r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).NO_SHOW}"
+                              th:action="@{/staff/reservations/{id}/cancel(id=${r.id})}"
+                              method="post">
 
-                        <button type="submit"
-                                class="btn btn-sm btn-danger"
-                                onclick="return confirm('Cancel this reservation?');">
-                            Cancel
-                        </button>
-                    </form>
+                            <input type="hidden"
+                                   th:name="${_csrf.parameterName}"
+                                   th:value="${_csrf.token}" />
+                            <input type="hidden" name="date" th:value="${selectedDate}" />
+
+                            <button type="submit"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Cancel this reservation?');">
+                                Cancel
+                            </button>
+                        </form>
+
+                        <!-- No-show & penalty 3 days -->
+                        <form th:if="${r.status == T(gr.hua.dit.studyrooms.entity.ReservationStatus).CONFIRMED}"
+                              th:action="@{/staff/reservations/{id}/no-show(id=${r.id})}"
+                              method="post">
+
+                            <input type="hidden"
+                                   th:name="${_csrf.parameterName}"
+                                   th:value="${_csrf.token}" />
+                            <input type="hidden" name="date" th:value="${selectedDate}" />
+
+                            <button type="submit"
+                                    class="btn btn-sm btn-warning"
+                                    onclick="return confirm('Mark this reservation as NO-SHOW and apply a 3-day penalty to the student?');">
+                                No-show
+                            </button>
+                        </form>
+                    </div>
                 </td>
             </tr>
+
             <tr th:if="${#lists.isEmpty(reservations)}">
                 <td colspan="6" class="text-center text-muted">
                     No reservations found for the selected criteria.

@@ -23,4 +23,6 @@ public interface ReservationService {
     void cancelReservationAsStaff(Long reservationId);
 
     int cancelByStaffForSpaceAndDate(Long spaceId, LocalDate date);
+
+    void markNoShow(Long reservationId);
 }
