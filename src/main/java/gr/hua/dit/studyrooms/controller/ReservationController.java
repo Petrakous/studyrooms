@@ -74,6 +74,7 @@ public class ReservationController {
             return "redirect:/reservations/my";
 
         } catch (Exception e) {
+            bindingResult.reject("reservationError", e.getMessage());
             model.addAttribute("form", form);
             model.addAttribute("spaces", studySpaceService.getAllSpaces());
             model.addAttribute("error", e.getMessage());
@@ -94,11 +95,16 @@ public class ReservationController {
 
     @PostMapping("/reservations/{id}/cancel")
     public String cancelMyReservation(@PathVariable Long id,
-                                      Authentication auth) {
+                                      Authentication auth,
+                                      RedirectAttributes redirectAttributes) {
         CustomUserDetails cud = (CustomUserDetails) auth.getPrincipal();
         User user = cud.getUser();
 
-        reservationService.cancelReservation(id, user);
+        try {
+            reservationService.cancelReservation(id, user);
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
         return "redirect:/reservations/my";
     }
 

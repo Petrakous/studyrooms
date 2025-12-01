@@ -22,6 +22,11 @@
                              @{/staff/spaces} :
                              @{/staff/spaces/{id}(id=${space.id})}">
 
+                    <input type="hidden"
+                           th:if="${_csrf != null}"
+                           th:name="${_csrf.parameterName}"
+                           th:value="${_csrf.token}"/>
+
                 <!-- Name -->
                 <div class="mb-3">
                     <label for="name" class="form-label">Name</label>
