@@ -2,6 +2,7 @@ package gr.hua.dit.studyrooms.entity;
 
 import jakarta.persistence.*;
 import java.util.List;
+import java.time.LocalDate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
@@ -32,7 +33,11 @@ public class User {
     @JsonIgnore
     private List<Reservation> reservations;
 
-    public User(Long id, List<Reservation> reservations, UserRole role, String email, String fullName, String password, String username) {
+    @Column(name = "penalty_until")
+    private LocalDate penaltyUntil;
+
+    public User(Long id, List<Reservation> reservations, UserRole role,
+                String email, String fullName, String password, String username) {
         this.id = id;
         this.reservations = reservations;
         this.role = role;
@@ -42,8 +47,7 @@ public class User {
         this.username = username;
     }
 
-    public User() {
-    }
+    public User() {}
 
     public Long getId() {
         return id;
@@ -99,5 +103,13 @@ public class User {
 
     public void setReservations(List<Reservation> reservations) {
         this.reservations = reservations;
+    }
+
+    public LocalDate getPenaltyUntil() {
+        return penaltyUntil;
+    }
+
+    public void setPenaltyUntil(LocalDate penaltyUntil) {
+        this.penaltyUntil = penaltyUntil;
     }
 }

@@ -7,6 +7,7 @@ import gr.hua.dit.studyrooms.entity.User;
 import gr.hua.dit.studyrooms.external.HolidayApiPort;
 import gr.hua.dit.studyrooms.repository.ReservationRepository;
 import gr.hua.dit.studyrooms.repository.StudySpaceRepository;
+import gr.hua.dit.studyrooms.repository.UserRepository;
 import gr.hua.dit.studyrooms.service.ReservationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,13 +29,17 @@ public class ReservationServiceImpl implements ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final StudySpaceRepository studySpaceRepository;
+    private final UserRepository userRepository;
     private final HolidayApiPort holidayApiPort;
 
-    public ReservationServiceImpl(ReservationRepository reservationRepository,
-                                  StudySpaceRepository studySpaceRepository,
-                                  HolidayApiPort holidayApiPort) {
+    public ReservationServiceImpl(
+            ReservationRepository reservationRepository,
+            StudySpaceRepository studySpaceRepository,
+            UserRepository userRepository, HolidayApiPort holidayApiPort) {
+
         this.reservationRepository = reservationRepository;
         this.studySpaceRepository = studySpaceRepository;
+        this.userRepository = userRepository;
         this.holidayApiPort = holidayApiPort;
     }
 
@@ -56,6 +61,14 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public Reservation createReservation(User user, Long studySpaceId,
                                          LocalDate date, LocalTime startTime, LocalTime endTime) {
+
+        // 🔒 Penalty check: αν ο χρήστης είναι μπλοκαρισμένος, δεν κάνουμε κράτηση
+        if (user.getPenaltyUntil() != null &&
+                !user.getPenaltyUntil().isBefore(LocalDate.now())) {
+            throw new IllegalStateException(
+                    "You cannot make a reservation until " + user.getPenaltyUntil()
+            );
+        }
 
         // 0. Έλεγχος αργίας μέσω external API
         if (holidayApiPort.isHoliday(date)) {
@@ -149,11 +162,6 @@ public class ReservationServiceImpl implements ReservationService {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("Reservation not found: " + reservationId));
 
-        // προς το παρόν: μόνο ο ίδιος ο χρήστης μπορεί να ακυρώσει τη δική του κράτηση
-        if (!reservation.getUser().getId().equals(user.getId())) {
-            throw new SecurityException("You cannot cancel someone else's reservation");
-        }
-
         reservation.setStatus(ReservationStatus.CANCELLED);
         reservationRepository.save(reservation);
     }
@@ -189,4 +197,30 @@ public class ReservationServiceImpl implements ReservationService {
 
         return cancelled;
     }
+
+    @Override
+    public void markNoShow(Long reservationId) {
+
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
+
+        User user = reservation.getUser();
+
+        // Μόνο αν η κράτηση δεν είναι ήδη cancelled
+        if (reservation.getStatus() == ReservationStatus.CANCELLED ||
+                reservation.getStatus() == ReservationStatus.CANCELLED_BY_STAFF ||
+                reservation.getStatus() == ReservationStatus.NO_SHOW) {
+            return;
+        }
+
+        // 3 ημέρες penalty από σήμερα
+        user.setPenaltyUntil(LocalDate.now().plusDays(3));
+
+        // Μαρκάρουμε τη κράτηση ως NO_SHOW
+        reservation.setStatus(ReservationStatus.NO_SHOW);
+
+        reservationRepository.save(reservation);
+        userRepository.save(user);
+    }
+
 }

@@ -142,6 +142,21 @@ public class ReservationController {
         return "redirect:/staff/reservations";
     }
 
+    @PostMapping("/staff/reservations/{id}/no-show")
+    @PreAuthorize("hasRole('STAFF')")
+    public String staffMarkNoShow(@PathVariable Long id,
+                                  @RequestParam(value = "date", required = false)
+                                  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                  LocalDate date) {
+
+        reservationService.markNoShow(id);
+
+        if (date != null) {
+            return "redirect:/staff/reservations?date=" + date;
+        }
+        return "redirect:/staff/reservations";
+    }
+
     @PostMapping("/staff/close-space")
     @PreAuthorize("hasRole('STAFF')")
     public String closeSpaceForDay(@RequestParam("spaceId") Long spaceId,
