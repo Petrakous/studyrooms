@@ -75,7 +75,19 @@
             </p>
 
             <!-- Global error (π.χ. παραβίαση κανόνα) -->
-            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+            <div th:if="${error} or ${#fields.hasGlobalErrors()}"
+                 class="alert alert-danger">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="flex-grow-1">
+                        <strong>We could not create your reservation.</strong>
+                        <div class="small text-white-50">Please review the details below.</div>
+                        <ul class="mb-0 mt-2" th:if="${#fields.hasGlobalErrors()}">
+                            <li th:each="err : ${#fields.globalErrors()}" th:text="${err}"></li>
+                        </ul>
+                    </div>
+                    <div class="text-end" th:if="${error}" th:text="${error}"></div>
+                </div>
+            </div>
 
             <div class="card shadow-sm">
                 <div class="card-body">

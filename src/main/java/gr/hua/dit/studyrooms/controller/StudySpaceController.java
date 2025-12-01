@@ -1,5 +1,6 @@
 package gr.hua.dit.studyrooms.controller;
 
+import gr.hua.dit.studyrooms.dto.StudySpaceDto;
 import gr.hua.dit.studyrooms.entity.StudySpace;
 import gr.hua.dit.studyrooms.service.StudySpaceService;
 import jakarta.validation.Valid;
@@ -69,40 +70,39 @@ public class StudySpaceController {
     @GetMapping("/staff/spaces/new")
     @PreAuthorize("hasAnyRole('STAFF')")
     public String newSpaceForm(Model model) {
-        model.addAttribute("space", new StudySpace());
+        model.addAttribute("space", new StudySpaceDto());
         return "space_form";
     }
 
     @PostMapping("/staff/spaces")
     @PreAuthorize("hasAnyRole('STAFF')")
-    public String createSpace(@Valid @ModelAttribute("space") StudySpace space,
+    public String createSpace(@Valid @ModelAttribute("space") StudySpaceDto space,
                               BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             return "space_form";
         }
 
-        studySpaceService.createSpace(space);
+        studySpaceService.createSpace(fromDto(space));
         return "redirect:/staff/spaces";
     }
 
     @GetMapping("/staff/spaces/{id}/edit")
     @PreAuthorize("hasAnyRole('STAFF')")
     public String editSpace(@PathVariable Long id, Model model) {
-        model.addAttribute("space", studySpaceService.getSpaceById(id));
+        model.addAttribute("space", toDto(studySpaceService.getSpaceById(id)));
         return "space_form";
     }
 
     @PostMapping("/staff/spaces/{id}")
     @PreAuthorize("hasAnyRole('STAFF')")
     public String updateSpace(@PathVariable Long id,
-                              @Valid @ModelAttribute("space") StudySpace space,
+                              @Valid @ModelAttribute("space") StudySpaceDto space,
                               BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
-            space.setId(id);
             return "space_form";
         }
 
-        studySpaceService.updateSpace(id, space);
+        studySpaceService.updateSpace(id, fromDto(space));
         return "redirect:/staff/spaces";
     }
 
@@ -111,5 +111,27 @@ public class StudySpaceController {
     public String deleteSpace(@PathVariable Long id) {
         studySpaceService.deleteSpace(id);
         return "redirect:/staff/spaces";
+    }
+
+    private StudySpace fromDto(StudySpaceDto dto) {
+        StudySpace space = new StudySpace();
+        space.setId(dto.getId());
+        space.setName(dto.getName());
+        space.setDescription(dto.getDescription());
+        space.setCapacity(dto.getCapacity());
+        space.setOpenTime(dto.getOpenTime());
+        space.setCloseTime(dto.getCloseTime());
+        return space;
+    }
+
+    private StudySpaceDto toDto(StudySpace space) {
+        StudySpaceDto dto = new StudySpaceDto();
+        dto.setId(space.getId());
+        dto.setName(space.getName());
+        dto.setDescription(space.getDescription());
+        dto.setCapacity(space.getCapacity());
+        dto.setOpenTime(space.getOpenTime());
+        dto.setCloseTime(space.getCloseTime());
+        return dto;
     }
 }
