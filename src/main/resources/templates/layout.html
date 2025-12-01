@@ -81,6 +81,7 @@
 
                     <form th:action="@{/logout}" method="post" class="d-inline">
                         <input type="hidden"
+                               th:if="${_csrf != null}"
                                th:name="${_csrf.parameterName}"
                                th:value="${_csrf.token}"/>
                         <button type="submit" class="btn btn-outline-light btn-sm">

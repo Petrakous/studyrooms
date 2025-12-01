@@ -42,9 +42,10 @@
             <h5 class="card-title mb-3">Close space for a day (cancel all reservations)</h5>
 
             <form th:action="@{/staff/close-space}" method="post" class="row g-2 align-items-end">
-                <input type="hidden"
-                       th:name="${_csrf.parameterName}"
-                       th:value="${_csrf.token}"/>
+                       <input type="hidden"
+                              th:if="${_csrf != null}"
+                              th:name="${_csrf.parameterName}"
+                              th:value="${_csrf.token}"/>
 
                 <!-- στέλνουμε τη selectedDate ως hidden, αλλά ΔΕΝ πιάνει columns -->
                 <input type="hidden" name="date" th:value="${selectedDate}"/>
@@ -108,47 +109,29 @@
                         CONFIRMED
                     </span>
                 </td>
+                <td>
+                    <form th:if="${r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED
+              and r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED_BY_STAFF}"
+                          th:action="@{/staff/reservations/{id}/cancel(id=${r.id})}"
+                          method="post"
+                          class="d-inline">
 
-                <!-- Actions column -->
-                <td class="text-center">
-                    <div class="d-inline-flex justify-content-between flex-nowrap gap-2">
+                        <!-- CSRF -->
+                               <input type="hidden"
+                                      th:if="${_csrf != null}"
+                                      th:name="${_csrf.parameterName}"
+                                      th:value="${_csrf.token}" />
 
-                        <!-- Cancel -->
-                        <form th:if="${r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED
-                              and r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED_BY_STAFF
-                              and r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).NO_SHOW}"
-                              th:action="@{/staff/reservations/{id}/cancel(id=${r.id})}"
-                              method="post">
+                        <!-- Στέλνουμε την ημερομηνία φίλτρου πίσω στον controller -->
+                        <input type="hidden" name="date"
+                               th:value="${selectedDate}" />
 
-                            <input type="hidden"
-                                   th:name="${_csrf.parameterName}"
-                                   th:value="${_csrf.token}" />
-                            <input type="hidden" name="date" th:value="${selectedDate}" />
-
-                            <button type="submit"
-                                    class="btn btn-sm btn-danger"
-                                    onclick="return confirm('Cancel this reservation?');">
-                                Cancel
-                            </button>
-                        </form>
-
-                        <!-- No-show & penalty 3 days -->
-                        <form th:if="${r.status == T(gr.hua.dit.studyrooms.entity.ReservationStatus).CONFIRMED}"
-                              th:action="@{/staff/reservations/{id}/no-show(id=${r.id})}"
-                              method="post">
-
-                            <input type="hidden"
-                                   th:name="${_csrf.parameterName}"
-                                   th:value="${_csrf.token}" />
-                            <input type="hidden" name="date" th:value="${selectedDate}" />
-
-                            <button type="submit"
-                                    class="btn btn-sm btn-warning"
-                                    onclick="return confirm('Mark this reservation as NO-SHOW and apply a 3-day penalty to the student?');">
-                                No-show
-                            </button>
-                        </form>
-                    </div>
+                        <button type="submit"
+                                class="btn btn-sm btn-danger"
+                                onclick="return confirm('Cancel this reservation?');">
+                            Cancel
+                        </button>
+                    </form>
                 </td>
             </tr>
 
