@@ -7,6 +7,7 @@ import gr.hua.dit.studyrooms.entity.User;
 import gr.hua.dit.studyrooms.external.HolidayApiPort;
 import gr.hua.dit.studyrooms.repository.ReservationRepository;
 import gr.hua.dit.studyrooms.repository.StudySpaceRepository;
+import gr.hua.dit.studyrooms.repository.UserRepository;
 import gr.hua.dit.studyrooms.service.NotificationService;
 import gr.hua.dit.studyrooms.service.ReservationService;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,8 @@ public class ReservationServiceImpl implements ReservationService {
     public ReservationServiceImpl(ReservationRepository reservationRepository,
                                   StudySpaceRepository studySpaceRepository,
                                   HolidayApiPort holidayApiPort,
-                                  NotificationService notificationService) {
+                                  NotificationService notificationService,
+                                  UserRepository userRepository) {
         this.reservationRepository = reservationRepository;
         this.studySpaceRepository = studySpaceRepository;
         this.userRepository = userRepository;
@@ -228,5 +230,30 @@ public class ReservationServiceImpl implements ReservationService {
         reservation.setStatus(ReservationStatus.CONFIRMED);
 
         return reservationRepository.save(reservation);
+    }
+
+    @Override
+    public void markNoShow(Long reservationId) {
+
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("Reservation not found: " + reservationId));
+
+        // Αν είναι ήδη σε state που δεν γίνεται no-show → μην κάνεις τίποτα
+        if (reservation.getStatus() == ReservationStatus.CANCELLED
+                || reservation.getStatus() == ReservationStatus.CANCELLED_BY_STAFF
+                || reservation.getStatus() == ReservationStatus.NO_SHOW) {
+            return;
+        }
+
+        User user = reservation.getUser();
+
+        // Επιβολή penalty 3 ημερών
+        user.setPenaltyUntil(LocalDate.now().plusDays(3));
+
+        // Αλλαγή κατάστασης κράτησης
+        reservation.setStatus(ReservationStatus.NO_SHOW);
+
+        reservationRepository.save(reservation);
+        userRepository.save(user);
     }
 }
