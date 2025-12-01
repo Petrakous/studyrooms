@@ -84,6 +84,11 @@
                 </div>
             </div>
         </div>
+
+        <div th:if="${penaltyUntil}" class="alert alert-danger mt-3">
+            You are blocked from making new reservations until
+            <strong th:text="${penaltyUntil}">2025-01-01</strong>.
+        </div>
     </div>
 
 </div>
