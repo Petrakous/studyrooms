@@ -14,7 +14,8 @@ import java.util.Map;
         AuthApiController.class,
         ReservationApiController.class,
         StudySpaceApiController.class,
-        StaffApiController.class
+        StaffApiController.class,
+        StatsApiController.class
 })
 public class ApiExceptionHandler {
 

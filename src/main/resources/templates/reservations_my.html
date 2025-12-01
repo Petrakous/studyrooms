@@ -12,6 +12,8 @@
         </a>
     </div>
 
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
     <p class="text-muted mb-4">
         Maximum duration per reservation: <strong>2 hours</strong>.
         Maximum number of active reservations per day: <strong>3</strong>.

@@ -45,18 +45,14 @@ public class ReservationApiController {
         CustomUserDetails cud = (CustomUserDetails) auth.getPrincipal();
         User user = cud.getUser();
 
-        try {
-            Reservation r = reservationService.createReservation(
-                    user,
-                    form.getStudySpaceId(),
-                    form.getDate(),
-                    form.getStartTime(),
-                    form.getEndTime()
-            );
-            return ResponseEntity.ok(r);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Reservation r = reservationService.createReservation(
+                user,
+                form.getStudySpaceId(),
+                form.getDate(),
+                form.getStartTime(),
+                form.getEndTime()
+        );
+        return ResponseEntity.ok(r);
     }
 
     // DELETE /api/reservations/{id}

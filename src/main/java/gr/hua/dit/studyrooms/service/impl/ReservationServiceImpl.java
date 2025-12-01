@@ -61,106 +61,33 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public Reservation createReservation(User user, Long studySpaceId,
                                          LocalDate date, LocalTime startTime, LocalTime endTime) {
-
-        // 🔒 Penalty check: αν ο χρήστης είναι μπλοκαρισμένος, δεν κάνουμε κράτηση
-        if (user.getPenaltyUntil() != null &&
-                !user.getPenaltyUntil().isBefore(LocalDate.now())) {
-            throw new IllegalStateException(
-                    "You cannot make a reservation until " + user.getPenaltyUntil()
-            );
-        }
-
-        // 0. Έλεγχος αργίας μέσω external API
-        if (holidayApiPort.isHoliday(date)) {
-            throw new IllegalStateException("Reservations are not allowed on public holidays.");
-        }
-
-        // 1. Φόρτωση χώρου
-        StudySpace space = studySpaceRepository.findById(studySpaceId)
-                .orElseThrow(() -> new IllegalArgumentException("StudySpace not found: " + studySpaceId));
-
-        // 2. Αν ο χώρος έχει κλείσει από το προσωπικό για εκείνη την ημέρα, δεν επιτρέπονται κρατήσεις
-        if (reservationRepository.existsByStudySpaceAndDateAndStatus(
-                space,
-                date,
-                ReservationStatus.CANCELLED_BY_STAFF
-        )) {
-            throw new IllegalStateException(
-                    "This study space has been closed by staff for the selected date. " +
-                            "Please choose another date or space."
-            );
-        }
-
-        // 3. Όχι πάνω από Χ ενεργές κρατήσεις / μέρα για τον ίδιο user
-        //    Ενεργές θεωρούμε PENDING & CONFIRMED
         List<ReservationStatus> activeStatuses = List.of(
                 ReservationStatus.PENDING,
                 ReservationStatus.CONFIRMED
         );
 
-        long activeCountForDay = reservationRepository
-                .countByUserAndDateAndStatusIn(user, date, activeStatuses);
+        StudySpace space = loadStudySpace(studySpaceId);
+        checkNotInPast(date, startTime);
+        checkHoliday(date);
+        checkSpaceClosedByStaff(space, date);
+        checkMaxReservationsPerDay(user, date, activeStatuses);
+        checkOpeningHours(space, startTime, endTime);
+        checkDurationWithinLimit(startTime, endTime);
+        checkOverlap(space, date, startTime, endTime, activeStatuses);
+        checkCapacity(space, date);
 
-        if (activeCountForDay >= MAX_RESERVATIONS_PER_DAY) {
-            throw new IllegalStateException(
-                    "You have reached the maximum number of active reservations (" +
-                            MAX_RESERVATIONS_PER_DAY + ") for this day."
-            );
-        }
-
-        // 4. Έλεγχος ωραρίου χώρου
-        if (startTime.isBefore(space.getOpenTime()) || endTime.isAfter(space.getCloseTime())) {
-            throw new IllegalStateException("Reservation time outside study space opening hours");
-        }
-        if (!endTime.isAfter(startTime)) {
-            throw new IllegalStateException("End time must be after start time");
-        }
-
-        // 5. Κανόνας: Μέγιστη διάρκεια κράτησης = 2 ώρες
-        long minutes = Duration.between(startTime, endTime).toMinutes();
-        if (minutes > MAX_RESERVATION_DURATION_MINUTES) {
-            throw new IllegalStateException("Maximum duration per reservation is 2 hours.");
-        }
-
-        // 6. Κανόνας: δεν επιτρέπονται επικαλυπτόμενες κρατήσεις για τον ίδιο χώρο
-        long overlapping = reservationRepository.countOverlappingReservations(
-                space,
-                date,
-                startTime,
-                endTime,
-                activeStatuses // η λίστα PENDING/CONFIRMED που ορίσαμε πιο πάνω
-        );
-
-        if (overlapping > 0) {
-            throw new IllegalStateException(
-                    "This study space is already reserved for the selected time range."
-            );
-        }
-
-        // 7. Έλεγχος διαθεσιμότητας (capacity) – απλά με βάση πόσες κρατήσεις έχει ο χώρος τη μέρα αυτή
-        List<Reservation> reservationsForSpaceAndDate =
-                reservationRepository.findByStudySpaceAndDate(space, date);
-
-        if (reservationsForSpaceAndDate.size() >= space.getCapacity()) {
-            throw new IllegalStateException("No available seats for this study space on this date");
-        }
-
-        // 8. Δημιουργία και αποθήκευση κράτησης
-        Reservation reservation = new Reservation();
-        reservation.setUser(user);
-        reservation.setStudySpace(space);
-        reservation.setDate(date);
-        reservation.setStartTime(startTime);
-        reservation.setEndTime(endTime);
-        reservation.setStatus(ReservationStatus.CONFIRMED); // ή PENDING αν θέλεις approval workflow
-
-        return reservationRepository.save(reservation);
+        return persistReservation(user, space, date, startTime, endTime);
     }
 
     @Override
     public void cancelReservation(Long reservationId, User user) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("Reservation not found: " + reservationId));
+
+        // προς το παρόν: μόνο ο ίδιος ο χρήστης μπορεί να ακυρώσει τη δική του κράτηση
+        if (!reservation.getUser().getId().equals(user.getId())) {
+            throw new SecurityException("You cannot cancel another user's reservation.");
+        }
 
         reservation.setStatus(ReservationStatus.CANCELLED);
         reservationRepository.save(reservation);
@@ -198,29 +125,98 @@ public class ReservationServiceImpl implements ReservationService {
         return cancelled;
     }
 
-    @Override
-    public void markNoShow(Long reservationId) {
-
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
-
-        User user = reservation.getUser();
-
-        // Μόνο αν η κράτηση δεν είναι ήδη cancelled
-        if (reservation.getStatus() == ReservationStatus.CANCELLED ||
-                reservation.getStatus() == ReservationStatus.CANCELLED_BY_STAFF ||
-                reservation.getStatus() == ReservationStatus.NO_SHOW) {
-            return;
+    private void checkNotInPast(LocalDate date, LocalTime startTime) {
+        LocalDate today = LocalDate.now();
+        if (date.isBefore(today)) {
+            throw new IllegalStateException("You cannot reserve in the past.");
         }
 
-        // 3 ημέρες penalty από σήμερα
-        user.setPenaltyUntil(LocalDate.now().plusDays(3));
-
-        // Μαρκάρουμε τη κράτηση ως NO_SHOW
-        reservation.setStatus(ReservationStatus.NO_SHOW);
-
-        reservationRepository.save(reservation);
-        userRepository.save(user);
+        if (date.isEqual(today) && startTime.isBefore(LocalTime.now())) {
+            throw new IllegalStateException("This start time has already passed for today.");
+        }
     }
 
+    private void checkHoliday(LocalDate date) {
+        if (holidayApiPort.isHoliday(date)) {
+            throw new IllegalStateException("Reservations are not allowed on public holidays.");
+        }
+    }
+
+    private StudySpace loadStudySpace(Long studySpaceId) {
+        return studySpaceRepository.findById(studySpaceId)
+                .orElseThrow(() -> new IllegalArgumentException("StudySpace not found: " + studySpaceId));
+    }
+
+    private void checkSpaceClosedByStaff(StudySpace space, LocalDate date) {
+        if (reservationRepository.existsByStudySpaceAndDateAndStatus(space, date, ReservationStatus.CANCELLED_BY_STAFF)) {
+            throw new IllegalStateException(
+                    "This study space has been closed by staff for the selected date. " +
+                            "Please choose another date or space."
+            );
+        }
+    }
+
+    private void checkMaxReservationsPerDay(User user, LocalDate date, List<ReservationStatus> activeStatuses) {
+        long activeCountForDay = reservationRepository.countByUserAndDateAndStatusIn(user, date, activeStatuses);
+        if (activeCountForDay >= MAX_RESERVATIONS_PER_DAY) {
+            throw new IllegalStateException(
+                    "You have reached the maximum number of active reservations (" +
+                            MAX_RESERVATIONS_PER_DAY + ") for this day."
+            );
+        }
+    }
+
+    private void checkOpeningHours(StudySpace space, LocalTime startTime, LocalTime endTime) {
+        if (startTime.isBefore(space.getOpenTime()) || endTime.isAfter(space.getCloseTime())) {
+            throw new IllegalStateException("Reservation time outside study space opening hours");
+        }
+        if (!endTime.isAfter(startTime)) {
+            throw new IllegalStateException("End time must be after start time");
+        }
+    }
+
+    private void checkDurationWithinLimit(LocalTime startTime, LocalTime endTime) {
+        long minutes = Duration.between(startTime, endTime).toMinutes();
+        if (minutes > MAX_RESERVATION_DURATION_MINUTES) {
+            throw new IllegalStateException("Maximum duration per reservation is 2 hours.");
+        }
+    }
+
+    private void checkOverlap(StudySpace space, LocalDate date, LocalTime startTime, LocalTime endTime,
+                              List<ReservationStatus> activeStatuses) {
+        long overlapping = reservationRepository.countOverlappingReservations(
+                space,
+                date,
+                startTime,
+                endTime,
+                activeStatuses
+        );
+
+        if (overlapping > 0) {
+            throw new IllegalStateException(
+                    "This study space is already reserved for the selected time range."
+            );
+        }
+    }
+
+    private void checkCapacity(StudySpace space, LocalDate date) {
+        List<Reservation> reservationsForSpaceAndDate = reservationRepository.findByStudySpaceAndDate(space, date);
+        if (reservationsForSpaceAndDate.size() >= space.getCapacity()) {
+            throw new IllegalStateException("No available seats for this study space on this date");
+        }
+    }
+
+    private Reservation persistReservation(User user, StudySpace space, LocalDate date,
+                                           LocalTime startTime, LocalTime endTime) {
+        Reservation reservation = new Reservation();
+        reservation.setUser(user);
+        reservation.setStudySpace(space);
+        reservation.setDate(date);
+        reservation.setStartTime(startTime);
+        reservation.setEndTime(endTime);
+        // All business rules executed above; persist confirmed reservation.
+        reservation.setStatus(ReservationStatus.CONFIRMED);
+
+        return reservationRepository.save(reservation);
+    }
 }
