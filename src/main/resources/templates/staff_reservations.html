@@ -114,24 +114,37 @@
                 </td>
                 <td>
                     <form th:if="${r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED
-              and r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED_BY_STAFF}"
+              and r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED_BY_STAFF
+              and r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).NO_SHOW}"
                           th:action="@{/staff/reservations/{id}/cancel(id=${r.id})}"
                           method="post"
                           class="d-inline">
 
-                        <!-- CSRF -->
                         <input type="hidden"
                                th:name="${_csrf.parameterName}"
                                th:value="${_csrf.token}" />
-
-                        <!-- Στέλνουμε την ημερομηνία φίλτρου πίσω στον controller -->
-                        <input type="hidden" name="date"
-                               th:value="${selectedDate}" />
 
                         <button type="submit"
                                 class="btn btn-sm btn-danger"
                                 onclick="return confirm('Cancel this reservation?');">
                             Cancel
+                        </button>
+                    </form>
+
+                    <!-- No-show & penalty 3 days -->
+                    <form th:if="${r.status == T(gr.hua.dit.studyrooms.entity.ReservationStatus).CONFIRMED}"
+                          th:action="@{/staff/reservations/{id}/no-show(id=${r.id})}"
+                          method="post"
+                          class="d-inline ms-1">
+
+                        <input type="hidden"
+                               th:name="${_csrf.parameterName}"
+                               th:value="${_csrf.token}" />
+
+                        <button type="submit"
+                                class="btn btn-sm btn-warning"
+                                onclick="return confirm('Mark this reservation as NO-SHOW and apply a 3-day penalty to the student?');">
+                            No-show
                         </button>
                     </form>
                 </td>
