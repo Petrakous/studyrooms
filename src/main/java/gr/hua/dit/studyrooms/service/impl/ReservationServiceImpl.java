@@ -219,4 +219,29 @@ public class ReservationServiceImpl implements ReservationService {
 
         return reservationRepository.save(reservation);
     }
+
+    @Override
+    public void markNoShow(Long reservationId) {
+
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
+
+        User user = reservation.getUser();
+
+        // Μόνο αν η κράτηση δεν είναι ήδη cancelled ή ήδη NO_SHOW
+        if (reservation.getStatus() == ReservationStatus.CANCELLED
+                || reservation.getStatus() == ReservationStatus.CANCELLED_BY_STAFF
+                || reservation.getStatus() == ReservationStatus.NO_SHOW) {
+            return;
+        }
+
+        // 3 ημέρες penalty από σήμερα
+        user.setPenaltyUntil(LocalDate.now().plusDays(3));
+
+        // Μαρκάρουμε την κράτηση ως NO_SHOW
+        reservation.setStatus(ReservationStatus.NO_SHOW);
+
+        reservationRepository.save(reservation);
+        userRepository.save(user);
+    }
 }

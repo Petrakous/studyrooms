@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head th:replace="~{layout :: head('Dashboard - StudyRooms')}"></head>
 
 <body th:replace="~{layout :: body('dashboard', ~{::content})}">
@@ -82,6 +82,18 @@
                         All Reservations
                     </a>
                 </div>
+            </div>
+        </div>
+
+        <!-- Staff: Occupancy Statistics -->
+        <div sec:authorize="hasRole('STAFF')" class="col-md-4">
+            <div class="p-4 border rounded-3 shadow-sm bg-light border-warning">
+                <h5 class="mb-2">Occupancy Statistics (Staff)</h5>
+                <p class="text-muted mb-3">View daily and weekly occupancy for study spaces.</p>
+
+                <a th:href="@{/staff/occupancy}" class="btn btn-outline-warning w-100">
+                    View Occupancy
+                </a>
             </div>
         </div>
 
