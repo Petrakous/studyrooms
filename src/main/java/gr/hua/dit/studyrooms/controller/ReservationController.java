@@ -112,9 +112,10 @@ public class ReservationController {
             LocalDate date,
             Model model) {
 
+        // αν δεν δοθεί date -> σήμερα
         LocalDate selectedDate = (date != null) ? date : LocalDate.now();
 
-        // πάρε τις κρατήσεις της ημέρας
+        // κρατήσεις της ημέρας
         List<Reservation> reservations =
                 reservationService.getReservationsForDate(selectedDate);
 
@@ -136,10 +137,9 @@ public class ReservationController {
 
         reservationService.cancelReservationAsStaff(id);
 
-        if (date != null) {
-            return "redirect:/staff/reservations?date=" + date;
-        }
-        return "redirect:/staff/reservations";
+        // αν δεν ήρθε date από το hidden field, γύρνα στη σημερινή μέρα
+        LocalDate redirectDate = (date != null) ? date : LocalDate.now();
+        return "redirect:/staff/reservations?date=" + redirectDate;
     }
 
     @PostMapping("/staff/reservations/{id}/no-show")
@@ -151,10 +151,8 @@ public class ReservationController {
 
         reservationService.markNoShow(id);
 
-        if (date != null) {
-            return "redirect:/staff/reservations?date=" + date;
-        }
-        return "redirect:/staff/reservations";
+        LocalDate redirectDate = (date != null) ? date : LocalDate.now();
+        return "redirect:/staff/reservations?date=" + redirectDate;
     }
 
     @PostMapping("/staff/close-space")
