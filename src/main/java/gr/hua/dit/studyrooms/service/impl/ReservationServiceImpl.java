@@ -7,6 +7,7 @@ import gr.hua.dit.studyrooms.entity.User;
 import gr.hua.dit.studyrooms.external.HolidayApiPort;
 import gr.hua.dit.studyrooms.repository.ReservationRepository;
 import gr.hua.dit.studyrooms.repository.StudySpaceRepository;
+import gr.hua.dit.studyrooms.repository.UserRepository;
 import gr.hua.dit.studyrooms.service.ReservationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,13 +29,17 @@ public class ReservationServiceImpl implements ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final StudySpaceRepository studySpaceRepository;
+    private final UserRepository userRepository;
     private final HolidayApiPort holidayApiPort;
 
-    public ReservationServiceImpl(ReservationRepository reservationRepository,
-                                  StudySpaceRepository studySpaceRepository,
-                                  HolidayApiPort holidayApiPort) {
+    public ReservationServiceImpl(
+            ReservationRepository reservationRepository,
+            StudySpaceRepository studySpaceRepository,
+            UserRepository userRepository, HolidayApiPort holidayApiPort) {
+
         this.reservationRepository = reservationRepository;
         this.studySpaceRepository = studySpaceRepository;
+        this.userRepository = userRepository;
         this.holidayApiPort = holidayApiPort;
     }
 

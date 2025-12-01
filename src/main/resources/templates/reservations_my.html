@@ -77,6 +77,11 @@
         </table>
     </div>
 
+    <div th:if="${penaltyUntil}" class="alert alert-danger">
+        You are blocked from making new reservations until
+        <span th:text="${penaltyUntil}"></span>.
+    </div>
+
     <a th:href="@{/dashboard}" class="btn btn-secondary mt-3">
         Back to Dashboard
     </a>
