@@ -21,6 +21,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     // κρατήσεις για έναν χώρο σε συγκεκριμένη μέρα
     List<Reservation> findByStudySpaceAndDate(StudySpace studySpace, LocalDate date);
 
+    List<Reservation> findByStudySpaceAndDateBetween(StudySpace studySpace, LocalDate startDate, LocalDate endDate);
+
     // όλες οι κρατήσεις μιας ημέρας (π.χ. για staff view)
     List<Reservation> findByDate(LocalDate date);
 
@@ -68,5 +70,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             @Param("endTime") LocalTime endTime,
             @Param("statuses") Collection<ReservationStatus> statuses
     );
+
+    long countByStudySpaceAndDateAndStatusIn(StudySpace space,
+                                             LocalDate date,
+                                             Collection<ReservationStatus> statuses);
 
 }

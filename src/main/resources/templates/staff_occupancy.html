@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Occupancy Statistics - StudyRooms')}">
+    <title>Occupancy Statistics</title>
+</head>
+<body th:replace="~{layout :: body('staff-occupancy', ~{::content})}">
+<div th:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-0">Occupancy statistics</h2>
+            <p class="text-muted mb-0">Choose a space and date range to review utilisation.</p>
+        </div>
+        <a th:href="@{/staff/reservations}" class="btn btn-outline-secondary">Back to staff view</a>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <form class="row g-3 align-items-end mb-4" method="get" th:action="@{/staff/occupancy}">
+        <div class="col-md-4">
+            <label for="spaceId" class="form-label">Study space</label>
+            <select id="spaceId" name="spaceId" class="form-select" required>
+                <option value="" th:selected="${selectedSpace == null}">Select space</option>
+                <option th:each="s : ${spaces}" th:value="${s.id}" th:text="${s.name}"
+                        th:selected="${selectedSpace != null and selectedSpace.id == s.id}"></option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="startDate" class="form-label">Start date</label>
+            <input id="startDate" type="date" name="startDate" class="form-control" th:value="${startDate}" required>
+        </div>
+        <div class="col-md-3">
+            <label for="endDate" class="form-label">End date</label>
+            <input id="endDate" type="date" name="endDate" class="form-control" th:value="${endDate}" required>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Load stats</button>
+        </div>
+    </form>
+
+    <div th:if="${selectedSpace == null}">
+        <div class="alert alert-info">Select a study space to view occupancy.</div>
+    </div>
+
+    <div th:if="${selectedSpace != null}">
+        <h5 class="mb-3" th:text="${selectedSpace.name} + ' (' + startDate + ' to ' + endDate + ')'">Room</h5>
+
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th class="text-end">Reservations</th>
+                    <th class="text-end">Occupied minutes</th>
+                    <th class="text-end">Total minutes available</th>
+                    <th class="text-end">Occupancy %</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="stat : ${stats}">
+                    <td th:text="${stat.date}">2025-01-01</td>
+                    <td class="text-end" th:text="${stat.reservationsCount}">0</td>
+                    <td class="text-end" th:text="${stat.occupiedMinutes}">0</td>
+                    <td class="text-end" th:text="${stat.totalMinutes}">0</td>
+                    <td class="text-end">
+                        <span class="badge" th:classappend="${stat.occupancyPercentage} > 70 ? ' bg-danger' : (${stat.occupancyPercentage} > 40 ? ' bg-warning text-dark' : ' bg-success')"
+                              th:text="${#numbers.formatDecimal(stat.occupancyPercentage, 1, 1)} + '%'">0%</span>
+                    </td>
+                </tr>
+                <tr th:if="${stats == null or #lists.isEmpty(stats)}">
+                    <td colspan="5" class="text-center text-muted">No data for the selected range.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
