@@ -44,6 +44,22 @@
                     </a>
                 </li>
 
+                <!-- SPA client (JWT) -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/spa/index.html" target="_blank" rel="noopener">
+                        SPA Client
+                    </a>
+                </li>
+
+                <!-- Staff occupancy stats -->
+                <li class="nav-item" th:if="${#authorization.expression('hasRole(''STAFF'')')}">
+                    <a class="nav-link"
+                       th:href="@{/staff/occupancy}"
+                       th:classappend="${activePage} == 'staff-occupancy' ? ' active' : ''">
+                        Occupancy
+                    </a>
+                </li>
+
                 <!-- My Reservations -->
                 <li class="nav-item">
                     <a class="nav-link"
