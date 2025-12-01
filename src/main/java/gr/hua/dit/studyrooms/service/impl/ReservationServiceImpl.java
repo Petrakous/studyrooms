@@ -7,6 +7,7 @@ import gr.hua.dit.studyrooms.entity.User;
 import gr.hua.dit.studyrooms.external.HolidayApiPort;
 import gr.hua.dit.studyrooms.repository.ReservationRepository;
 import gr.hua.dit.studyrooms.repository.StudySpaceRepository;
+import gr.hua.dit.studyrooms.service.NotificationService;
 import gr.hua.dit.studyrooms.service.ReservationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,13 +30,16 @@ public class ReservationServiceImpl implements ReservationService {
     private final ReservationRepository reservationRepository;
     private final StudySpaceRepository studySpaceRepository;
     private final HolidayApiPort holidayApiPort;
+    private final NotificationService notificationService;
 
     public ReservationServiceImpl(ReservationRepository reservationRepository,
                                   StudySpaceRepository studySpaceRepository,
-                                  HolidayApiPort holidayApiPort) {
+                                  HolidayApiPort holidayApiPort,
+                                  NotificationService notificationService) {
         this.reservationRepository = reservationRepository;
         this.studySpaceRepository = studySpaceRepository;
         this.holidayApiPort = holidayApiPort;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -71,7 +75,9 @@ public class ReservationServiceImpl implements ReservationService {
         checkOverlap(space, date, startTime, endTime, activeStatuses);
         checkCapacity(space, date, activeStatuses);
 
-        return persistReservation(user, space, date, startTime, endTime);
+        Reservation reservation = persistReservation(user, space, date, startTime, endTime);
+        notificationService.notifyReservationCreated(reservation);
+        return reservation;
     }
 
     @Override
@@ -86,6 +92,7 @@ public class ReservationServiceImpl implements ReservationService {
 
         reservation.setStatus(ReservationStatus.CANCELLED);
         reservationRepository.save(reservation);
+        notificationService.notifyReservationCancelled(reservation, false);
     }
 
     @Override
@@ -95,6 +102,7 @@ public class ReservationServiceImpl implements ReservationService {
 
         reservation.setStatus(ReservationStatus.CANCELLED_BY_STAFF);
         reservationRepository.save(reservation);
+        notificationService.notifyReservationCancelled(reservation, true);
     }
 
     @Override
