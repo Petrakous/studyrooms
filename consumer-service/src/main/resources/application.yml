@@ -1,0 +1,11 @@
+studyrooms:
+  consumer:
+    enabled: false
+    base-url: http://localhost:8080
+    username: student
+    password: password
+
+logging:
+  level:
+    root: INFO
+    gr.hua.dit.studyrooms.consumer: INFO

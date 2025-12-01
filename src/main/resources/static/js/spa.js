@@ -133,7 +133,9 @@ function renderReservations(reservations) {
         cancelBtn.type = 'button';
         cancelBtn.textContent = 'Cancel';
         cancelBtn.onclick = () => cancelReservation(res.id);
-        cancelBtn.disabled = res.status && res.status !== 'ACTIVE';
+        const normalizedStatus = (res.status || '').toUpperCase();
+        // Allow cancellation while the reservation is still active (e.g. CONFIRMED/PENDING)
+        cancelBtn.disabled = normalizedStatus === 'CANCELLED' || normalizedStatus === 'CANCELLED_BY_STAFF';
         item.appendChild(meta);
         item.appendChild(cancelBtn);
         fragment.appendChild(item);
