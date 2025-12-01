@@ -1,5 +1,6 @@
 package gr.hua.dit.studyrooms.controller.api;
 
+import gr.hua.dit.studyrooms.dto.StudySpaceDto;
 import gr.hua.dit.studyrooms.entity.StudySpace;
 import gr.hua.dit.studyrooms.service.StudySpaceService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,8 +43,8 @@ public class StudySpaceApiController {
     @Operation(summary = "Create a new study space (staff only)")
     @PostMapping
     @PreAuthorize("hasAnyRole('STAFF')")
-    public ResponseEntity<StudySpace> createSpace(@Valid @RequestBody StudySpace space) {
-        return ResponseEntity.ok(studySpaceService.createSpace(space));
+    public ResponseEntity<StudySpace> createSpace(@Valid @RequestBody StudySpaceDto space) {
+        return ResponseEntity.ok(studySpaceService.createSpace(fromDto(space)));
     }
 
     // PUT /api/spaces/{id} (STAFF)
@@ -51,8 +52,8 @@ public class StudySpaceApiController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('STAFF')")
     public ResponseEntity<StudySpace> updateSpace(@PathVariable Long id,
-                                                  @Valid @RequestBody StudySpace space) {
-        return ResponseEntity.ok(studySpaceService.updateSpace(id, space));
+                                                  @Valid @RequestBody StudySpaceDto space) {
+        return ResponseEntity.ok(studySpaceService.updateSpace(id, fromDto(space)));
     }
 
     // DELETE /api/spaces/{id} (STAFF)
@@ -62,5 +63,16 @@ public class StudySpaceApiController {
     public ResponseEntity<Void> deleteSpace(@PathVariable Long id) {
         studySpaceService.deleteSpace(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private StudySpace fromDto(StudySpaceDto dto) {
+        StudySpace space = new StudySpace();
+        space.setId(dto.getId());
+        space.setName(dto.getName());
+        space.setDescription(dto.getDescription());
+        space.setCapacity(dto.getCapacity());
+        space.setOpenTime(dto.getOpenTime());
+        space.setCloseTime(dto.getCloseTime());
+        return space;
     }
 }

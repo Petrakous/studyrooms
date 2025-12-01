@@ -17,12 +17,14 @@ public class User {
     private String username;
 
     @Column(nullable = false)
+    @JsonIgnore
     private String password;
 
     @Column(nullable = false, length = 100)
     private String fullName;
 
     @Column(nullable = false, unique = true, length = 100)
+    @JsonIgnore
     private String email;
 
     @Enumerated(EnumType.STRING)
