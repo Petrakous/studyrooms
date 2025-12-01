@@ -79,7 +79,11 @@ public class SecurityConfig {
                                 "/images/**",
                                 "/h2-console/**",
                                 "/spaces",
-                                "/spaces/**"
+                                "/spaces/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/api-docs"
                         ).permitAll()
                         .requestMatchers("/staff/**").hasAnyRole("STAFF")
                         .anyRequest().authenticated()
