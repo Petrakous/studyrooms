@@ -42,10 +42,16 @@
             </ul>
 
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()')}">
+                <li class="nav-item d-flex align-items-center" th:if="${#authorization.expression('isAuthenticated()')}">
                     <span class="navbar-text me-2"
                           th:text="${#authentication.name}">user</span>
-                    <a class="btn btn-outline-light btn-sm" th:href="@{/logout}">Logout</a>
+                    <form th:action="@{/logout}" method="post" class="d-inline">
+                        <input type="hidden"
+                               th:if="${_csrf != null}"
+                               th:name="${_csrf.parameterName}"
+                               th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
+                    </form>
                 </li>
 
                 <li class="nav-item" th:if="${#authorization.expression('!isAuthenticated()')}">
