@@ -49,6 +49,7 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "/api/auth/register",
                                 "/v3/api-docs/**",
+                                "/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
@@ -82,9 +83,9 @@ public class SecurityConfig {
                                 "/spaces",
                                 "/spaces/**",
                                 "/v3/api-docs/**",
+                                "/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/api-docs"
+                                "/swagger-ui.html"
                         ).permitAll()
                         .requestMatchers("/staff/**").hasAnyRole("STAFF")
                         .anyRequest().authenticated()
