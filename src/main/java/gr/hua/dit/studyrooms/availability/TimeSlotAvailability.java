@@ -4,9 +4,9 @@ import java.time.LocalTime;
 
 public class TimeSlotAvailability {
 
-    private LocalTime start;
-    private LocalTime end;
-    private boolean occupied;
+    private final LocalTime start;
+    private final LocalTime end;
+    private final boolean occupied;
 
     public TimeSlotAvailability(LocalTime start, LocalTime end, boolean occupied) {
         this.start = start;
@@ -14,7 +14,7 @@ public class TimeSlotAvailability {
         this.occupied = occupied;
     }
 
-    public LocalTime getStart() {
+    public LocalTime start() {
         return start;
     }
 
