@@ -67,8 +67,8 @@
                 </td>
                 <td>
                     <span class="badge"
-                          th:classappend="${slot.booked} ? ' bg-danger' : ' bg-success'">
-                        <span th:text="${slot.booked} ? 'Booked' : 'Available'">Available</span>
+                          th:classappend="${slot.occupied} ? ' bg-danger' : ' bg-success'">
+                        <span th:text="${slot.occupied} ? 'Booked' : 'Available'">Available</span>
                     </span>
                 </td>
             </tr>
