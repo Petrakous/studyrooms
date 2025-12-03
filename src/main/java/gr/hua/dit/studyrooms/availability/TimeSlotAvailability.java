@@ -14,7 +14,7 @@ public class TimeSlotAvailability {
         this.occupied = occupied;
     }
 
-    public LocalTime start() {
+    public LocalTime getStart() {
         return start;
     }
 
