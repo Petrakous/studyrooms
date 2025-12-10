@@ -33,7 +33,11 @@ public class NotificationApiAdapter implements NotificationPort {
 
     private void send(String channel, String recipient, String subject, String body) {
         if (!properties.isEnabled()) {
-            LOGGER.debug("Notification client disabled; skipping {} to {}", channel, recipient);
+            String messageDetails = subject != null ?
+                    String.format("subject '%s' and body '%s'", subject, body) :
+                    String.format("message '%s'", body);
+
+            LOGGER.info("Notification client disabled; skipping {} to {} with {}", channel, recipient, messageDetails);
             return;
         }
 
