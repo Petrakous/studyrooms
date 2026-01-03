@@ -9,6 +9,7 @@ import gr.hua.dit.studyrooms.repository.StudySpaceRepository;
 import gr.hua.dit.studyrooms.repository.UserRepository;
 import gr.hua.dit.studyrooms.repository.ReservationRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -16,8 +17,10 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Supplier;
 
 @Component
+@ConditionalOnProperty(name = "demo.seed.enabled", havingValue = "true")
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
@@ -39,61 +42,70 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
 
         // === Default USERS ===
-        if (userRepository.count() == 0) {
+        ensureUser(
+                () -> userRepository.findByUsername("staff").orElse(null),
+                () -> {
+                    User staff = new User();
+                    staff.setUsername("staff");
+                    staff.setPassword(passwordEncoder.encode("staff123"));
+                    staff.setFullName("Staff User");
+                    staff.setEmail("staff@studyrooms.local");
+                    staff.setRole(UserRole.STAFF);
+                    return staff;
+                }
+        );
 
-            User staff = new User();
-            staff.setUsername("staff");
-            staff.setPassword(passwordEncoder.encode("staff123"));
-            staff.setFullName("Staff User");
-            staff.setEmail("staff@studyrooms.local");
-            staff.setRole(UserRole.STAFF);
-            userRepository.save(staff);
+        ensureUser(
+                () -> userRepository.findByUsername("student").orElse(null),
+                () -> {
+                    User student = new User();
+                    student.setUsername("student");
+                    student.setPassword(passwordEncoder.encode("student123"));
+                    student.setFullName("Student User");
+                    student.setEmail("student@studyrooms.local");
+                    student.setRole(UserRole.STUDENT);
+                    return student;
+                }
+        );
 
-            User student = new User();
-            student.setUsername("student");
-            student.setPassword(passwordEncoder.encode("student123"));
-            student.setFullName("Student User");
-            student.setEmail("student@studyrooms.local");
-            student.setRole(UserRole.STUDENT);
-            userRepository.save(student);
-
-            // δεύτερος φοιτητής για πιο ρεαλιστικά demo
-            User student2 = new User();
-            student2.setUsername("student2");
-            student2.setPassword(passwordEncoder.encode("student123"));
-            student2.setFullName("Second Student");
-            student2.setEmail("student2@studyrooms.local");
-            student2.setRole(UserRole.STUDENT);
-            userRepository.save(student2);
-        }
+        // δεύτερος φοιτητής για πιο ρεαλιστικά demo
+        ensureUser(
+                () -> userRepository.findByUsername("student2").orElse(null),
+                () -> {
+                    User student2 = new User();
+                    student2.setUsername("student2");
+                    student2.setPassword(passwordEncoder.encode("student123"));
+                    student2.setFullName("Second Student");
+                    student2.setEmail("student2@studyrooms.local");
+                    student2.setRole(UserRole.STUDENT);
+                    return student2;
+                }
+        );
 
         // === Default STUDY SPACES ===
-        if (studySpaceRepository.count() == 0) {
+        ensureStudySpace(
+                "Library A - Quiet Zone",
+                "Quiet area suitable for individual study.",
+                10,
+                LocalTime.of(8, 0),
+                LocalTime.of(20, 0)
+        );
 
-            StudySpace space1 = new StudySpace();
-            space1.setName("Library A - Quiet Zone");
-            space1.setDescription("Quiet area suitable for individual study.");
-            space1.setCapacity(10);
-            space1.setOpenTime(LocalTime.of(8, 0));
-            space1.setCloseTime(LocalTime.of(20, 0));
-            studySpaceRepository.save(space1);
+        ensureStudySpace(
+                "Reading Room 1",
+                "Group study room with whiteboard.",
+                6,
+                LocalTime.of(9, 0),
+                LocalTime.of(22, 0)
+        );
 
-            StudySpace space2 = new StudySpace();
-            space2.setName("Reading Room 1");
-            space2.setDescription("Group study room with whiteboard.");
-            space2.setCapacity(6);
-            space2.setOpenTime(LocalTime.of(9, 0));
-            space2.setCloseTime(LocalTime.of(22, 0));
-            studySpaceRepository.save(space2);
-
-            StudySpace space3 = new StudySpace();
-            space3.setName("Computer Lab");
-            space3.setDescription("PC lab with workstations and printer.");
-            space3.setCapacity(20);
-            space3.setOpenTime(LocalTime.of(10, 0));
-            space3.setCloseTime(LocalTime.of(18, 0));
-            studySpaceRepository.save(space3);
-        }
+        ensureStudySpace(
+                "Computer Lab",
+                "PC lab with workstations and printer.",
+                20,
+                LocalTime.of(10, 0),
+                LocalTime.of(18, 0)
+        );
 
         // === Sample RESERVATIONS ===
 
@@ -221,5 +233,33 @@ public class DataInitializer implements CommandLineRunner {
                 reservationRepository.save(demo);
             }
         }
+    }
+
+    private User ensureUser(Supplier<User> existingSupplier, Supplier<User> creator) {
+        User existing = existingSupplier.get();
+        if (existing != null) {
+            return existing;
+        }
+        return userRepository.save(creator.get());
+    }
+
+    private StudySpace ensureStudySpace(String name, String description, int capacity, LocalTime openTime, LocalTime closeTime) {
+        return studySpaceRepository.findByName(name)
+                .map(existing -> {
+                    existing.setDescription(description);
+                    existing.setCapacity(capacity);
+                    existing.setOpenTime(openTime);
+                    existing.setCloseTime(closeTime);
+                    return studySpaceRepository.save(existing);
+                })
+                .orElseGet(() -> {
+                    StudySpace space = new StudySpace();
+                    space.setName(name);
+                    space.setDescription(description);
+                    space.setCapacity(capacity);
+                    space.setOpenTime(openTime);
+                    space.setCloseTime(closeTime);
+                    return studySpaceRepository.save(space);
+                });
     }
 }
