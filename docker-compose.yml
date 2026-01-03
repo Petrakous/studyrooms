@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: studyrooms
+      POSTGRES_PASSWORD: studyrooms
+      POSTGRES_DB: studyrooms
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+  app:
+    build: .
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: studyrooms
+      DB_USERNAME: studyrooms
+      DB_PASSWORD: studyrooms
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  consumer:
+    build:
+      context: ./consumer-service
+    environment:
+      STUDYROOMS_CONSUMER_ENABLED: "true"
+      STUDYROOMS_CONSUMER_BASE_URL: http://app:8080
+      STUDYROOMS_CONSUMER_USERNAME: student
+      STUDYROOMS_CONSUMER_PASSWORD: password
+    depends_on:
+      app:
+        condition: service_started
+    profiles: ["with-consumer"]
+
+volumes:
+  db-data:

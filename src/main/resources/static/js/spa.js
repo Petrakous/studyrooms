@@ -1,4 +1,4 @@
-let token = null;
+let token = sessionStorage.getItem('spaToken');
 
 const tokenStatus = document.getElementById('token-status');
 const loginError = document.getElementById('login-error');
@@ -9,15 +9,50 @@ const reservationStatus = document.getElementById('reservation-status');
 const reservationsList = document.getElementById('reservations-list');
 const reservationsError = document.getElementById('reservations-error');
 const spaceSelect = document.getElementById('space-select');
+const logoutButton = document.getElementById('logout');
 
 function showError(el, message) {
     el.textContent = message || '';
     el.classList.toggle('hidden', !message);
 }
 
+function setToken(value) {
+    token = value;
+    if (value) {
+        sessionStorage.setItem('spaToken', value);
+    } else {
+        sessionStorage.removeItem('spaToken');
+    }
+    updateTokenStatus(!!value);
+}
+
 function updateTokenStatus(hasToken) {
     tokenStatus.textContent = hasToken ? 'Token ready' : 'No token';
     tokenStatus.className = hasToken ? 'pill pill-success' : 'pill pill-muted';
+}
+
+function resetUiForLogout() {
+    spacesList.innerHTML = 'Sign in first.';
+    reservationsList.innerHTML = 'Sign in first.';
+    spaceSelect.innerHTML = '<option value="" disabled selected>Select a space</option>';
+    reservationStatus.textContent = 'Waiting';
+    reservationStatus.className = 'pill pill-muted';
+    showError(loginError, '');
+    showError(spacesError, '');
+    showError(reservationError, '');
+    showError(reservationsError, '');
+}
+
+function formatApiError(payload, fallback, statusText) {
+    let message = payload?.message || payload?.error || fallback || statusText;
+    const errors = payload?.errors;
+    if (errors && typeof errors === 'object') {
+        const detailed = Object.entries(errors).map(([field, msg]) => `${field}: ${msg}`).join('; ');
+        if (detailed) {
+            message = `${message} (${detailed})`;
+        }
+    }
+    return message;
 }
 
 async function apiFetch(path, options = {}) {
@@ -36,7 +71,11 @@ async function apiFetch(path, options = {}) {
     if (!response.ok) {
         const body = await response.text();
         const payload = (() => { try { return JSON.parse(body); } catch { return null; }})();
-        const details = payload?.message || payload?.error || body || response.statusText;
+        if (response.status === 401) {
+            setToken(null);
+            resetUiForLogout();
+        }
+        const details = formatApiError(payload, body, response.statusText);
         throw new Error(details);
     }
     if (response.status === 204) {
@@ -59,16 +98,15 @@ async function handleLogin(event) {
         });
         if (!res.ok) {
             const body = await res.json().catch(() => ({}));
-            const msg = body.message || 'Login failed. Check your credentials.';
+            const msg = formatApiError(body, 'Login failed. Check your credentials.', res.statusText);
             throw new Error(msg);
         }
         const data = await res.json();
-        token = data.token;
-        updateTokenStatus(true);
+        setToken(data.token);
         await Promise.all([loadSpaces(), loadReservations()]);
     } catch (e) {
-        token = null;
-        updateTokenStatus(false);
+        setToken(null);
+        resetUiForLogout();
         showError(loginError, e.message);
     }
 }
@@ -191,9 +229,18 @@ async function handleReservationSubmit(event) {
     }
 }
 
+function handleLogout() {
+    setToken(null);
+    resetUiForLogout();
+}
+
 document.getElementById('login-form').addEventListener('submit', handleLogin);
 document.getElementById('reload-spaces').addEventListener('click', loadSpaces);
 document.getElementById('reservation-form').addEventListener('submit', handleReservationSubmit);
 document.getElementById('reload-reservations').addEventListener('click', loadReservations);
+logoutButton.addEventListener('click', handleLogout);
 
-updateTokenStatus(false);
+updateTokenStatus(!!token);
+if (token) {
+    Promise.all([loadSpaces(), loadReservations()]).catch(() => handleLogout());
+}
