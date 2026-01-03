@@ -1,6 +1,7 @@
 package gr.hua.dit.studyrooms.controller;
 
 import gr.hua.dit.studyrooms.dto.StudySpaceDto;
+import gr.hua.dit.studyrooms.dto.StudySpaceMapper;
 import gr.hua.dit.studyrooms.entity.StudySpace;
 import gr.hua.dit.studyrooms.service.StudySpaceService;
 import jakarta.validation.Valid;
@@ -82,14 +83,14 @@ public class StudySpaceController {
             return "space_form";
         }
 
-        studySpaceService.createSpace(fromDto(space));
+        studySpaceService.createSpace(StudySpaceMapper.toEntity(space));
         return "redirect:/staff/spaces";
     }
 
     @GetMapping("/staff/spaces/{id}/edit")
     @PreAuthorize("hasAnyRole('STAFF')")
     public String editSpace(@PathVariable Long id, Model model) {
-        model.addAttribute("space", toDto(studySpaceService.getSpaceById(id)));
+        model.addAttribute("space", StudySpaceMapper.toDto(studySpaceService.getSpaceById(id)));
         return "space_form";
     }
 
@@ -102,7 +103,7 @@ public class StudySpaceController {
             return "space_form";
         }
 
-        studySpaceService.updateSpace(id, fromDto(space));
+        studySpaceService.updateSpace(id, StudySpaceMapper.toEntity(space));
         return "redirect:/staff/spaces";
     }
 
@@ -113,25 +114,4 @@ public class StudySpaceController {
         return "redirect:/staff/spaces";
     }
 
-    private StudySpace fromDto(StudySpaceDto dto) {
-        StudySpace space = new StudySpace();
-        space.setId(dto.getId());
-        space.setName(dto.getName());
-        space.setDescription(dto.getDescription());
-        space.setCapacity(dto.getCapacity());
-        space.setOpenTime(dto.getOpenTime());
-        space.setCloseTime(dto.getCloseTime());
-        return space;
-    }
-
-    private StudySpaceDto toDto(StudySpace space) {
-        StudySpaceDto dto = new StudySpaceDto();
-        dto.setId(space.getId());
-        dto.setName(space.getName());
-        dto.setDescription(space.getDescription());
-        dto.setCapacity(space.getCapacity());
-        dto.setOpenTime(space.getOpenTime());
-        dto.setCloseTime(space.getCloseTime());
-        return dto;
-    }
 }
