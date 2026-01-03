@@ -13,4 +13,11 @@ public class WebClientConfig {
                 .baseUrl("https://date.nager.at/api/v3")
                 .build();
     }
+
+    @Bean
+    public WebClient openMeteoWebClient(WebClient.Builder builder) {
+        return builder
+                .baseUrl("https://api.open-meteo.com/v1")
+                .build();
+    }
 }
