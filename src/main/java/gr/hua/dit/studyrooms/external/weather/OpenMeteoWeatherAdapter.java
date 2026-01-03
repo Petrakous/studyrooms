@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Service
 public class OpenMeteoWeatherAdapter implements WeatherPort {
@@ -55,6 +58,83 @@ public class OpenMeteoWeatherAdapter implements WeatherPort {
             logger.warn("Failed to fetch weather from Open-Meteo", e);
             throw new ExternalServiceException("Failed to fetch weather information", e);
         }
+    }
+
+    @Override
+    public WeatherDto getWeatherAt(double latitude, double longitude, LocalDateTime at) {
+        if (at == null) {
+            return getCurrentWeather(latitude, longitude);
+        }
+
+        try {
+            String date = at.toLocalDate().toString();
+            LocalDateTime normalized = at.withMinute(0).withSecond(0).withNano(0);
+            String target = normalized.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+
+            ForecastResponse response = openMeteoWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/forecast")
+                            .queryParam("latitude", latitude)
+                            .queryParam("longitude", longitude)
+                            .queryParam("hourly", "temperature_2m,wind_speed_10m,precipitation,weather_code")
+                            .queryParam("start_date", date)
+                            .queryParam("end_date", date)
+                            .queryParam("timezone", "UTC")
+                            .build())
+                    .retrieve()
+                    .bodyToMono(ForecastResponse.class)
+                    .block();
+
+            if (response == null || response.hourly == null || response.hourly.time == null) {
+                throw new ExternalServiceException("Weather service unavailable");
+            }
+
+            int index = findExactIndex(response.hourly.time, target);
+            if (index == -1) {
+                index = findClosestIndex(response.hourly.time, normalized);
+            }
+
+            if (index == -1 || !response.hourly.hasValuesAt(index)) {
+                throw new ExternalServiceException("No forecast data available for requested time");
+            }
+
+            WeatherDto dto = new WeatherDto();
+            dto.setTimestamp(LocalDateTime.parse(response.hourly.time.get(index)));
+            dto.setTemperatureCelsius(response.hourly.temperature2m.get(index));
+            dto.setWindSpeed(response.hourly.windSpeed10m.get(index));
+            dto.setPrecipitation(response.hourly.precipitation.get(index));
+            dto.setWeatherCode(response.hourly.weatherCode.get(index));
+            return dto;
+        } catch (ExternalServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.warn("Failed to fetch forecast from Open-Meteo", e);
+            throw new ExternalServiceException("Failed to fetch weather information", e);
+        }
+    }
+
+    private int findExactIndex(List<String> times, String target) {
+        for (int i = 0; i < times.size(); i++) {
+            if (target.equals(times.get(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private int findClosestIndex(List<String> times, LocalDateTime target) {
+        int closestIndex = -1;
+        long smallestDiff = Long.MAX_VALUE;
+        for (int i = 0; i < times.size(); i++) {
+            LocalDateTime candidate = LocalDateTime.parse(times.get(i));
+            long diff = Math.abs(candidate.atZone(java.time.ZoneOffset.UTC).toEpochSecond()
+                    - target.atZone(java.time.ZoneOffset.UTC).toEpochSecond());
+            if (diff < smallestDiff) {
+                smallestDiff = diff;
+                closestIndex = i;
+            }
+        }
+        return closestIndex;
     }
 
     private static class CurrentWeatherResponse {
@@ -117,6 +197,59 @@ public class OpenMeteoWeatherAdapter implements WeatherPort {
 
         public void setWeatherCode(Integer weatherCode) {
             this.weatherCode = weatherCode;
+        }
+    }
+
+    private static class ForecastResponse {
+        private Hourly hourly;
+
+        public Hourly getHourly() {
+            return hourly;
+        }
+
+        public void setHourly(Hourly hourly) {
+            this.hourly = hourly;
+        }
+    }
+
+    private static class Hourly {
+        private List<String> time;
+        @JsonProperty("temperature_2m")
+        private List<Double> temperature2m;
+        @JsonProperty("wind_speed_10m")
+        private List<Double> windSpeed10m;
+        private List<Double> precipitation;
+        @JsonProperty("weather_code")
+        private List<Integer> weatherCode;
+
+        public List<String> getTime() {
+            return time;
+        }
+
+        public void setTime(List<String> time) {
+            this.time = time;
+        }
+
+        public void setTemperature2m(List<Double> temperature2m) {
+            this.temperature2m = temperature2m;
+        }
+
+        public void setWindSpeed10m(List<Double> windSpeed10m) {
+            this.windSpeed10m = windSpeed10m;
+        }
+
+        public void setPrecipitation(List<Double> precipitation) {
+            this.precipitation = precipitation;
+        }
+
+        public void setWeatherCode(List<Integer> weatherCode) {
+            this.weatherCode = weatherCode;
+        }
+
+        boolean hasValuesAt(int index) {
+            return temperature2m != null && windSpeed10m != null && precipitation != null && weatherCode != null
+                    && index < temperature2m.size() && index < windSpeed10m.size()
+                    && index < precipitation.size() && index < weatherCode.size();
         }
     }
 }

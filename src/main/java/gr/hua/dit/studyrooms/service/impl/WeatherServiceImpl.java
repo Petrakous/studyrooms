@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,16 +34,24 @@ public class WeatherServiceImpl implements WeatherService {
 
     @Override
     public WeatherDto getCurrentWeather(double latitude, double longitude) {
+        return getWeather(latitude, longitude, null);
+    }
+
+    @Override
+    public WeatherDto getWeather(double latitude, double longitude, LocalDateTime at) {
         validateCoordinates(latitude, longitude);
 
-        String cacheKey = latitude + "," + longitude;
+        LocalDateTime normalizedAt = at != null ? at.truncatedTo(ChronoUnit.HOURS) : null;
+        String cacheKey = latitude + "," + longitude + "," + (normalizedAt != null ? normalizedAt : "now");
         CacheEntry existing = cache.get(cacheKey);
         Instant now = Instant.now();
         if (existing != null && now.isBefore(existing.expiresAt)) {
             return existing.value;
         }
 
-        WeatherDto fresh = weatherPort.getCurrentWeather(latitude, longitude);
+        WeatherDto fresh = normalizedAt == null
+                ? weatherPort.getCurrentWeather(latitude, longitude)
+                : weatherPort.getWeatherAt(latitude, longitude, normalizedAt);
         cache.put(cacheKey, new CacheEntry(fresh, now.plus(ttl)));
         return fresh;
     }
