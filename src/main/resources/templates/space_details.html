@@ -24,6 +24,27 @@
         <span th:text="${space.closeTime}">20:00</span>
     </p>
 
+    <div class="card mb-4" id="weather-card"
+         th:attr="data-lat=${@environment.getProperty('studyrooms.demo.latitude', '37.9838')},
+                  data-lon=${@environment.getProperty('studyrooms.demo.longitude', '23.7275')},
+                  data-location-label=${@environment.getProperty('studyrooms.demo.location-label', 'Demo campus coordinates')}">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h5 class="card-title mb-1">Weather</h5>
+                    <p class="text-muted mb-0 small"
+                       th:text="'Using ' + (${@environment.getProperty('studyrooms.demo.location-label', 'demo coordinates')})">
+                        Using demo coordinates
+                    </p>
+                </div>
+                <div class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></div>
+            </div>
+            <div class="small" data-weather-content>
+                Loading current weather...
+            </div>
+        </div>
+    </div>
+
     <!-- Date selector -->
     <div class="card mb-3">
         <div class="card-body">
@@ -82,6 +103,82 @@
             </tbody>
         </table>
     </div>
+
+    <script>
+        (() => {
+            const card = document.getElementById('weather-card');
+            if (!card) {
+                return;
+            }
+
+            const content = card.querySelector('[data-weather-content]');
+            const spinner = card.querySelector('.spinner-border');
+            const lat = parseFloat(card.dataset.lat);
+            const lon = parseFloat(card.dataset.lon);
+            const locationLabel = card.dataset.locationLabel || 'demo coordinates';
+
+            const stopSpinner = () => {
+                if (spinner && spinner.parentNode) {
+                    spinner.remove();
+                }
+            };
+
+            const renderMessage = (message) => {
+                if (content) {
+                    content.textContent = message;
+                }
+            };
+
+            if (Number.isNaN(lat) || Number.isNaN(lon)) {
+                stopSpinner();
+                renderMessage('Weather unavailable: missing or invalid coordinates.');
+                return;
+            }
+
+            fetch(`/api/weather?lat=${lat}&lon=${lon}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Weather service returned an error');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    stopSpinner();
+                    if (!data) {
+                        renderMessage('Weather data is not available right now.');
+                        return;
+                    }
+
+                    const parts = [];
+                    if (typeof data.temperatureCelsius === 'number') {
+                        parts.push(`Temperature: ${data.temperatureCelsius.toFixed(1)}°C`);
+                    }
+                    if (typeof data.windSpeed === 'number') {
+                        parts.push(`Wind: ${data.windSpeed.toFixed(1)} m/s`);
+                    }
+                    if (typeof data.precipitation === 'number') {
+                        parts.push(`Precipitation: ${data.precipitation.toFixed(1)} mm`);
+                    }
+
+                    if (parts.length === 0) {
+                        renderMessage('Weather data is not available right now.');
+                        return;
+                    }
+
+                    content.innerHTML = `
+                        <div class="mb-1">Current conditions near ${locationLabel}:</div>
+                        <ul class="mb-0 ps-3">
+                            ${parts.map(p => `<li>${p}</li>`).join('')}
+                        </ul>
+                    `;
+                })
+                .catch(error => {
+                    console.warn('Weather fetch failed', error);
+                    stopSpinner();
+                    renderMessage('Weather service is unavailable right now.');
+                });
+        })();
+    </script>
 
 </div>
 </body>
