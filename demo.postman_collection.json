@@ -157,6 +157,22 @@
           ]
         }
       }
+    },
+    {
+      "name": "Weather (public)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost/api/weather?lat=37.9838&lon=23.7275",
+          "protocol": "http",
+          "host": ["localhost"],
+          "path": ["api", "weather"],
+          "query": [
+            { "key": "lat", "value": "37.9838" },
+            { "key": "lon", "value": "23.7275" }
+          ]
+        }
+      }
     }
   ],
   "variable": [

@@ -28,6 +28,7 @@ docker compose up --build
 3. **Swagger / API**
    - Open http://localhost/swagger-ui.html and authenticate via `/api/auth/login`.
    - Use the JWT to call protected endpoints such as `/api/spaces` or `/api/reservations`.
+   - For a quick public call, try the weather lookup: `/api/weather?lat=37.9838&lon=23.7275` (Athens)
 4. **SPA**
    - Visit http://localhost/spa/ and login as a student.
    - List spaces, create or cancel a reservation, and verify errors are displayed from the API.
