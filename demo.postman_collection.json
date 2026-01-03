@@ -1,0 +1,184 @@
+{
+  "info": {
+    "name": "StudyRooms Demo",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Quick demo calls against the StudyRooms docker stack via http://localhost"
+  },
+  "item": [
+    {
+      "name": "Login (student)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"student\",\n  \"password\": \"student123\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost/api/auth/login",
+          "protocol": "http",
+          "host": ["localhost"],
+          "path": ["api", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "Login (staff)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"staff\",\n  \"password\": \"staff123\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost/api/auth/login",
+          "protocol": "http",
+          "host": ["localhost"],
+          "path": ["api", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "List spaces",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "http://localhost/api/spaces",
+          "protocol": "http",
+          "host": ["localhost"],
+          "path": ["api", "spaces"]
+        }
+      }
+    },
+    {
+      "name": "Create reservation",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studySpaceId\": 1,\n  \"date\": \"{{tomorrow}}\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"11:00\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost/api/reservations",
+          "protocol": "http",
+          "host": ["localhost"],
+          "path": ["api", "reservations"]
+        }
+      }
+    },
+    {
+      "name": "My reservations",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "http://localhost/api/reservations/my",
+          "protocol": "http",
+          "host": ["localhost"],
+          "path": ["api", "reservations", "my"]
+        }
+      }
+    },
+    {
+      "name": "Cancel my reservation",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "http://localhost/api/reservations/{{reservationId}}",
+          "protocol": "http",
+          "host": ["localhost"],
+          "path": ["api", "reservations", "{{reservationId}}"]
+        }
+      }
+    },
+    {
+      "name": "Staff list reservations",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "http://localhost/api/staff/reservations",
+          "protocol": "http",
+          "host": ["localhost"],
+          "path": ["api", "staff", "reservations"]
+        }
+      }
+    },
+    {
+      "name": "Staff cancel reservation",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "http://localhost/api/staff/reservations/{{reservationId}}/cancel",
+          "protocol": "http",
+          "host": ["localhost"],
+          "path": ["api", "staff", "reservations", "{{reservationId}}", "cancel"]
+        }
+      }
+    },
+    {
+      "name": "Occupancy stats (staff)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "http://localhost/api/stats/occupancy?spaceId=1&startDate={{today}}&endDate={{today}}",
+          "protocol": "http",
+          "host": ["localhost"],
+          "path": ["api", "stats", "occupancy"],
+          "query": [
+            { "key": "spaceId", "value": "1" },
+            { "key": "startDate", "value": "{{today}}" },
+            { "key": "endDate", "value": "{{today}}" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Weather (public)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost/api/weather?lat=37.9838&lon=23.7275",
+          "protocol": "http",
+          "host": ["localhost"],
+          "path": ["api", "weather"],
+          "query": [
+            { "key": "lat", "value": "37.9838" },
+            { "key": "lon", "value": "23.7275" }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "token", "value": "" },
+    { "key": "reservationId", "value": "" },
+    { "key": "today", "value": "2024-01-01" },
+    { "key": "tomorrow", "value": "2024-01-02" }
+  ]
+}
