@@ -44,6 +44,7 @@ public class ReservationStatisticsServiceImpl implements ReservationStatisticsSe
                 .collect(Collectors.groupingBy(Reservation::getDate));
 
         long totalMinutes = Math.max(0, Duration.between(space.getOpenTime(), space.getCloseTime()).toMinutes());
+        long totalSeatMinutes = totalMinutes * Math.max(1, space.getCapacity());
 
         List<OccupancyStatsEntry> results = new ArrayList<>();
         LocalDate cursor = startDate;
@@ -53,7 +54,8 @@ public class ReservationStatisticsServiceImpl implements ReservationStatisticsSe
                     .mapToLong(r -> Duration.between(r.getStartTime(), r.getEndTime()).toMinutes())
                     .sum();
 
-            results.add(new OccupancyStatsEntry(cursor, dayReservations.size(), occupiedMinutes, totalMinutes));
+            long cappedOccupiedMinutes = Math.min(occupiedMinutes, totalSeatMinutes);
+            results.add(new OccupancyStatsEntry(cursor, dayReservations.size(), cappedOccupiedMinutes, totalSeatMinutes));
             cursor = cursor.plusDays(1);
         }
 
