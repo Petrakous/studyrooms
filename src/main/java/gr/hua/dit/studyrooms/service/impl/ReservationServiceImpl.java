@@ -26,6 +26,11 @@ public class ReservationServiceImpl implements ReservationService {
     // Μέχρι 3 ενεργές κρατήσεις ανά μέρα ανά φοιτητή
     private static final int MAX_RESERVATIONS_PER_DAY = 3;
 
+    private static final List<ReservationStatus> ACTIVE_RESERVATION_STATUSES = List.of(
+            ReservationStatus.PENDING,
+            ReservationStatus.CONFIRMED
+    );
+
     // Μέγιστη διάρκεια μίας κράτησης: 2 ώρες (120 λεπτά)
     private static final int MAX_RESERVATION_DURATION_MINUTES = 120;
 
@@ -66,22 +71,17 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public Reservation createReservation(User user, Long studySpaceId,
                                          LocalDate date, LocalTime startTime, LocalTime endTime) {
-        List<ReservationStatus> activeStatuses = List.of(
-                ReservationStatus.PENDING,
-                ReservationStatus.CONFIRMED
-        );
-
         StudySpace space = loadStudySpace(studySpaceId);
         checkUserNotPenalized(user);
         checkNotInPast(date, startTime);
         checkHoliday(date);
         checkSpaceClosedByStaff(space, date);
+        checkMaxReservationsPerDay(user, date, ACTIVE_RESERVATION_STATUSES);
         checkMaxReservationsPerDay(user, date, activeStatuses);
         checkTimeOrder(startTime, endTime);
         checkOpeningHours(space, startTime, endTime);
         checkDurationWithinLimit(startTime, endTime);
-        checkOverlap(space, date, startTime, endTime, activeStatuses);
-        checkCapacity(space, date, activeStatuses);
+        checkCapacityForTimeRange(space, date, startTime, endTime);
 
         Reservation reservation = persistReservation(user, space, date, startTime, endTime);
         notificationService.notifyReservationCreated(reservation);
@@ -206,27 +206,29 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
-    private void checkOverlap(StudySpace space, LocalDate date, LocalTime startTime, LocalTime endTime,
-                              List<ReservationStatus> activeStatuses) {
+    private void checkCapacityForTimeRange(StudySpace space, LocalDate date, LocalTime startTime, LocalTime endTime) {
         long overlapping = reservationRepository.countOverlappingReservations(
                 space,
                 date,
                 startTime,
                 endTime,
-                activeStatuses
+                ACTIVE_RESERVATION_STATUSES
         );
 
-        if (overlapping > 0) {
+        if (overlapping >= space.getCapacity()) {
             throw new IllegalStateException(
-                    "This study space is already reserved for the selected time range."
+                    "No seats available for that time slot (" + startTime + " to " + endTime + " on " + date + ")."
             );
         }
     }
 
-    private void checkCapacity(StudySpace space, LocalDate date, List<ReservationStatus> activeStatuses) {
-        long activeCount = reservationRepository.countByStudySpaceAndDateAndStatusIn(space, date, activeStatuses);
-        if (activeCount >= space.getCapacity()) {
-            throw new IllegalStateException("No available seats for this study space on this date");
+    private void checkUserNotPenalized(User user) {
+        LocalDate penaltyUntil = user.getPenaltyUntil();
+        LocalDate today = LocalDate.now();
+        if (penaltyUntil != null && (penaltyUntil.isAfter(today) || penaltyUntil.isEqual(today))) {
+            throw new IllegalStateException(
+                    "You are blocked from making reservations until " + penaltyUntil + "."
+            );
         }
     }
 
