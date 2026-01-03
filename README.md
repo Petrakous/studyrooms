@@ -50,7 +50,7 @@ The system is **distributed** because it spans multiple cooperating processes: b
 - **Web UI (Thymeleaf MVC)**: Uses session-based authentication. Controllers render templates and call services; services enforce business rules and persist via repositories. Staff-only flows (space management, closing spaces, no-show marking) are restricted by roles.
 - **REST API**: Stateless endpoints secured by JWT (bearer). Auth controller issues tokens, which clients use to call space, reservation, stats, and weather endpoints. The same service layer is reused, ensuring rule consistency.
 - **SPA client**: Static assets served from `/spa/` call the REST API via fetch with bearer tokens. It demonstrates token lifecycle, optimistic UI, and error propagation from API validation.
-- **External services**: Weather and holiday lookups via `WebClient` adapters treat providers as black boxes; failures are handled gracefully. A notification port/adaptor can call an external notification service when enabled. Weather results are also shown in the web UI (space details page) via a small widget that calls the public `/api/weather` endpoint with configured or default demo coordinates and degrades gracefully when unavailable.
+- **External services**: Weather and holiday lookups via `WebClient` adapters treat providers as black boxes; failures are handled gracefully. A notification port/adaptor can call an external notification service when enabled. Weather results are also shown in the web UI (space details page) via a small widget that calls the public `/api/weather` endpoint with configured or default demo coordinates, lets the user pick a date/time for their reservation to see a forecast, and degrades gracefully when unavailable.
 - **Optional consumer service**: A separate Spring Boot process authenticates via the API, fetches spaces and the current user’s reservations, and logs the digest—showcasing a second distributed client.
 
 ## Technology Stack
@@ -114,7 +114,7 @@ These checks live in the **service layer** to avoid duplication across MVC/REST 
 
 ## External Services Integration
 - **Holiday API**: `HolidayApiAdapter` queries a public holiday service; failures degrade gracefully (treat as non-holiday) to keep reservation flow available.
-- **Weather API**: `OpenMeteoWeatherAdapter` (via `WeatherService`) fetches simple weather data. The `/api/weather` endpoint is consumed both by API clients and by the server-rendered space details page via a small JavaScript fetch widget that shows current temperature, wind, and precipitation. It defaults to demo coordinates (Athens) but can be pointed at any campus via environment/properties, and it fails fast with friendly text if coordinates are missing or the upstream service is down.
+- **Weather API**: `OpenMeteoWeatherAdapter` (via `WeatherService`) fetches current conditions or hour-level forecasts. The `/api/weather` endpoint is consumed both by API clients and by the server-rendered space details page via a small JavaScript fetch widget that shows temperature, wind, and precipitation for the selected date/time (defaults to today at space opening). It defaults to demo coordinates (Athens) but can be pointed at any campus via environment/properties, and it fails fast with friendly text if coordinates are missing or the upstream service is down.
 - **Notification service (optional)**: `NotificationApiAdapter` posts to an external notification endpoint when enabled; otherwise logs and skips to keep the system resilient.
 
 Adapters treat these services as black boxes, hiding protocol/URL details behind ports. Error handling avoids breaking core booking flows—timeouts and HTTP errors are logged and ignored where appropriate.
@@ -123,7 +123,7 @@ Adapters treat these services as black boxes, hiding protocol/URL details behind
 ### Web UI (Thymeleaf)
 - Students: register/login, browse study spaces, create bookings with validation feedback, view and cancel “My Reservations”.
 - Staff: dashboards for daily reservations, mark no-shows, cancel reservations, close spaces for a date (bulk cancellation), view statistics.
-- Space details view includes a lightweight weather card that fetches `/api/weather` asynchronously and shows temperature, wind, and precipitation using demo or configured coordinates; failures render friendly text without disrupting the page.
+- Space details view includes a lightweight weather card that fetches `/api/weather` asynchronously and shows temperature, wind, and precipitation for a chosen date/time using demo or configured coordinates; failures render friendly text without disrupting the page.
 
 ### SPA client (`/spa/`)
 A minimalist single-page client that:
