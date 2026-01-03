@@ -64,14 +64,14 @@ public class SpaceAvailabilityService {
                 slotEnd = dayEnd;
             }
 
-            boolean occupied = false;
+            LocalTime slotStartTime = slotStart.toLocalTime();
+            LocalTime slotEndTime = slotEnd.toLocalTime();
 
-            for (Reservation r : reservations) {
-                if (timesOverlap(slotStart.toLocalTime(), slotEnd.toLocalTime(), r.getStartTime(), r.getEndTime())) {
-                    occupied = true;
-                    break;
-                }
-            }
+            long concurrent = reservations.stream()
+                    .filter(r -> timesOverlap(slotStartTime, slotEndTime, r.getStartTime(), r.getEndTime()))
+                    .count();
+
+            boolean occupied = concurrent >= space.getCapacity();
 
             list.add(new TimeSlotAvailability(slotStart.toLocalTime(), slotEnd.toLocalTime(), occupied));
         }
@@ -81,6 +81,6 @@ public class SpaceAvailabilityService {
 
     private boolean timesOverlap(LocalTime aStart, LocalTime aEnd,
                                  LocalTime bStart, LocalTime bEnd) {
-        return !aEnd.isBefore(bStart) && !bEnd.isBefore(aStart);
+        return bEnd.isAfter(aStart) && bStart.isBefore(aEnd);
     }
 }

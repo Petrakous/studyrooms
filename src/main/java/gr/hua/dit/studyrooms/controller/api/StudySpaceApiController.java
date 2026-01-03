@@ -1,6 +1,7 @@
 package gr.hua.dit.studyrooms.controller.api;
 
 import gr.hua.dit.studyrooms.dto.StudySpaceDto;
+import gr.hua.dit.studyrooms.dto.StudySpaceMapper;
 import gr.hua.dit.studyrooms.entity.StudySpace;
 import gr.hua.dit.studyrooms.service.StudySpaceService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,7 +45,7 @@ public class StudySpaceApiController {
     @PostMapping
     @PreAuthorize("hasAnyRole('STAFF')")
     public ResponseEntity<StudySpace> createSpace(@Valid @RequestBody StudySpaceDto space) {
-        return ResponseEntity.ok(studySpaceService.createSpace(fromDto(space)));
+        return ResponseEntity.ok(studySpaceService.createSpace(StudySpaceMapper.toEntity(space)));
     }
 
     // PUT /api/spaces/{id} (STAFF)
@@ -53,7 +54,7 @@ public class StudySpaceApiController {
     @PreAuthorize("hasAnyRole('STAFF')")
     public ResponseEntity<StudySpace> updateSpace(@PathVariable Long id,
                                                   @Valid @RequestBody StudySpaceDto space) {
-        return ResponseEntity.ok(studySpaceService.updateSpace(id, fromDto(space)));
+        return ResponseEntity.ok(studySpaceService.updateSpace(id, StudySpaceMapper.toEntity(space)));
     }
 
     // DELETE /api/spaces/{id} (STAFF)
@@ -65,14 +66,4 @@ public class StudySpaceApiController {
         return ResponseEntity.noContent().build();
     }
 
-    private StudySpace fromDto(StudySpaceDto dto) {
-        StudySpace space = new StudySpace();
-        space.setId(dto.getId());
-        space.setName(dto.getName());
-        space.setDescription(dto.getDescription());
-        space.setCapacity(dto.getCapacity());
-        space.setOpenTime(dto.getOpenTime());
-        space.setCloseTime(dto.getCloseTime());
-        return space;
-    }
 }
