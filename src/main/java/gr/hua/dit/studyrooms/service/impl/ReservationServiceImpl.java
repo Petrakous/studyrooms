@@ -77,7 +77,6 @@ public class ReservationServiceImpl implements ReservationService {
         checkHoliday(date);
         checkSpaceClosedByStaff(space, date);
         checkMaxReservationsPerDay(user, date, ACTIVE_RESERVATION_STATUSES);
-        checkMaxReservationsPerDay(user, date, activeStatuses);
         checkTimeOrder(startTime, endTime);
         checkOpeningHours(space, startTime, endTime);
         checkDurationWithinLimit(startTime, endTime);

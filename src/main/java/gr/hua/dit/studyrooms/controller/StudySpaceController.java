@@ -11,9 +11,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import gr.hua.dit.studyrooms.availability.TimeSlotAvailability;
-
 import gr.hua.dit.studyrooms.availability.SpaceAvailabilityService;
-import gr.hua.dit.studyrooms.availability.TimeSlotView;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
