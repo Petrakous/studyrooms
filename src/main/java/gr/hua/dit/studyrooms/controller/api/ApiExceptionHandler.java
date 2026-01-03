@@ -1,5 +1,6 @@
 package gr.hua.dit.studyrooms.controller.api;
 
+import gr.hua.dit.studyrooms.external.ExternalServiceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -15,7 +16,8 @@ import java.util.Map;
         ReservationApiController.class,
         StudySpaceApiController.class,
         StaffApiController.class,
-        StatsApiController.class
+        StatsApiController.class,
+        WeatherApiController.class
 })
 public class ApiExceptionHandler {
 
@@ -46,6 +48,13 @@ public class ApiExceptionHandler {
         Map<String, String> body = new HashMap<>();
         body.put("message", ex.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+    }
+
+    @ExceptionHandler(ExternalServiceException.class)
+    public ResponseEntity<Map<String, String>> handleExternal(ExternalServiceException ex) {
+        Map<String, String> body = new HashMap<>();
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(body);
     }
 }
 

@@ -77,6 +77,7 @@ public class ReservationServiceImpl implements ReservationService {
         checkHoliday(date);
         checkSpaceClosedByStaff(space, date);
         checkMaxReservationsPerDay(user, date, ACTIVE_RESERVATION_STATUSES);
+        checkMaxReservationsPerDay(user, date, activeStatuses);
         checkTimeOrder(startTime, endTime);
         checkOpeningHours(space, startTime, endTime);
         checkDurationWithinLimit(startTime, endTime);
@@ -217,6 +218,16 @@ public class ReservationServiceImpl implements ReservationService {
         if (overlapping >= space.getCapacity()) {
             throw new IllegalStateException(
                     "No seats available for that time slot (" + startTime + " to " + endTime + " on " + date + ")."
+            );
+        }
+    }
+
+    private void checkUserNotPenalized(User user) {
+        LocalDate penaltyUntil = user.getPenaltyUntil();
+        LocalDate today = LocalDate.now();
+        if (penaltyUntil != null && (penaltyUntil.isAfter(today) || penaltyUntil.isEqual(today))) {
+            throw new IllegalStateException(
+                    "You are blocked from making reservations until " + penaltyUntil + "."
             );
         }
     }
