@@ -49,7 +49,7 @@ services:
       STUDYROOMS_CONSUMER_ENABLED: "true"
       STUDYROOMS_CONSUMER_BASE_URL: http://app:8080
       STUDYROOMS_CONSUMER_USERNAME: student
-      STUDYROOMS_CONSUMER_PASSWORD: password
+      STUDYROOMS_CONSUMER_PASSWORD: student123
     depends_on:
       app:
         condition: service_started

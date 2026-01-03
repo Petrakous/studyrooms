@@ -231,16 +231,6 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
-    private void checkUserNotPenalized(User user) {
-        LocalDate penaltyUntil = user.getPenaltyUntil();
-        LocalDate today = LocalDate.now();
-        if (penaltyUntil != null && (penaltyUntil.isAfter(today) || penaltyUntil.isEqual(today))) {
-            throw new IllegalStateException(
-                    "You are blocked from making reservations until " + penaltyUntil + "."
-            );
-        }
-    }
-
     private Reservation persistReservation(User user, StudySpace space, LocalDate date,
                                            LocalTime startTime, LocalTime endTime) {
         Reservation reservation = new Reservation();
