@@ -32,6 +32,16 @@ services:
       db:
         condition: service_healthy
 
+  nginx:
+    image: nginx:stable
+    depends_on:
+      app:
+        condition: service_started
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+
   consumer:
     build:
       context: ./consumer-service
