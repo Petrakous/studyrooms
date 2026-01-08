@@ -251,11 +251,12 @@ public class ReservationServiceImpl implements ReservationService {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("Reservation not found: " + reservationId));
 
-        // Αν είναι ήδη σε state που δεν γίνεται no-show → μην κάνεις τίποτα
-        if (reservation.getStatus() == ReservationStatus.CANCELLED
-                || reservation.getStatus() == ReservationStatus.CANCELLED_BY_STAFF
-                || reservation.getStatus() == ReservationStatus.NO_SHOW) {
-            return;
+        if (reservation.getStatus() != ReservationStatus.CONFIRMED) {
+            throw new IllegalStateException("Only confirmed reservations can be marked as no-show.");
+        }
+
+        if (!isNoShowEligible(reservation)) {
+            throw new IllegalStateException("Cannot mark a future reservation as no-show.");
         }
 
         User user = reservation.getUser();
@@ -268,5 +269,16 @@ public class ReservationServiceImpl implements ReservationService {
 
         reservationRepository.save(reservation);
         userRepository.save(user);
+    }
+
+    private boolean isNoShowEligible(Reservation reservation) {
+        LocalDate today = LocalDate.now();
+        if (reservation.getDate().isBefore(today)) {
+            return true;
+        }
+        if (reservation.getDate().isAfter(today)) {
+            return false;
+        }
+        return reservation.getStartTime().isBefore(LocalTime.now());
     }
 }

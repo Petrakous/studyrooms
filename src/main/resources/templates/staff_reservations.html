@@ -14,6 +14,7 @@
 
     <!-- Flash message after close-space action -->
     <div th:if="${message}" class="alert alert-info" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
     <!-- Filter by date (single date, auto-submit on change) -->
     <form th:action="@{/staff/reservations}" method="get"
@@ -104,12 +105,17 @@
                           th:classappend="${r.status} == 'CONFIRMED' ? ' bg-success' :
                                           (${r.status} == 'PENDING' ? ' bg-warning text-dark' :
                                            (${r.status} == 'CANCELLED' ? ' bg-secondary' :
-                                            (${r.status} == 'CANCELLED_BY_STAFF' ? ' bg-danger' : ' bg-light text-dark'))) "
+                                            (${r.status} == 'CANCELLED_BY_STAFF' ? ' bg-danger' :
+                                            (${r.status} == 'NO_SHOW' ? ' bg-dark' : ' bg-light text-dark')))) "
                           th:text="${r.status}">
                         CONFIRMED
                     </span>
                 </td>
                 <td>
+                    <div th:with="noShowEligible=${r.status == T(gr.hua.dit.studyrooms.entity.ReservationStatus).CONFIRMED
+                            and (r.date.isBefore(today)
+                            or (r.date.isEqual(today) and r.startTime.isBefore(nowTime)))}"
+                         class="d-inline">
                     <form th:if="${r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED
               and r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED_BY_STAFF}"
                           th:action="@{/staff/reservations/{id}/cancel(id=${r.id})}"
@@ -132,6 +138,25 @@
                             Cancel
                         </button>
                     </form>
+                        <form th:action="@{/staff/reservations/{id}/no-show(id=${r.id})}"
+                              method="post"
+                              class="d-inline">
+                            <input type="hidden"
+                                   th:if="${_csrf != null}"
+                                   th:name="${_csrf.parameterName}"
+                                   th:value="${_csrf.token}" />
+
+                            <input type="hidden" name="date"
+                                   th:value="${selectedDate}" />
+
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-dark"
+                                    th:disabled="${!noShowEligible}"
+                                    onclick="return confirm('Mark this reservation as no-show?');">
+                                No-show
+                            </button>
+                        </form>
+                    </div>
                 </td>
             </tr>
 

@@ -128,6 +128,8 @@ public class ReservationController {
 
         model.addAttribute("reservations", reservations);
         model.addAttribute("selectedDate", selectedDate);
+        model.addAttribute("today", LocalDate.now());
+        model.addAttribute("nowTime", java.time.LocalTime.now());
 
         return "staff_reservations";
     }
@@ -151,9 +153,14 @@ public class ReservationController {
     public String staffMarkNoShow(@PathVariable Long id,
                                   @RequestParam(value = "date", required = false)
                                   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-                                  LocalDate date) {
+                                  LocalDate date,
+                                  RedirectAttributes redirectAttributes) {
 
-        reservationService.markNoShow(id);
+        try {
+            reservationService.markNoShow(id);
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
 
         LocalDate redirectDate = (date != null) ? date : LocalDate.now();
         return "redirect:/staff/reservations?date=" + redirectDate;
