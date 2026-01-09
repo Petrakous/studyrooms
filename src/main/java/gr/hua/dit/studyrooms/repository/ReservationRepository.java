@@ -81,4 +81,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
                                              LocalDate date,
                                              Collection<ReservationStatus> statuses);
 
-    }
+    void deleteByDemoTrue();
+
+}

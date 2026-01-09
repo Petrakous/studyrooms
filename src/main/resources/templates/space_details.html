@@ -19,9 +19,12 @@
         <span th:text="${space.capacity}">10</span>
         <br>
         Open:
-        <span th:text="${space.openTime}">08:00</span>
-        -
-        <span th:text="${space.closeTime}">20:00</span>
+        <span th:if="${space.fullDay}">Full day (24 hours)</span>
+        <span th:unless="${space.fullDay}">
+            <span th:text="${space.openTime}">08:00</span>
+            -
+            <span th:text="${space.closeTime}">20:00</span>
+        </span>
     </p>
 
     <div class="card mb-4" id="weather-card"
@@ -29,7 +32,7 @@
                   data-lon=${@environment.getProperty('studyrooms.demo.longitude', '23.7275')},
                   data-location-label=${@environment.getProperty('studyrooms.demo.location-label', 'Demo campus coordinates')},
                   data-default-date=${selectedDate},
-                  data-default-time=${space.openTime}"
+                  data-default-time=${space.fullDay} ? '00:00' : ${space.openTime}"
     >
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-2">

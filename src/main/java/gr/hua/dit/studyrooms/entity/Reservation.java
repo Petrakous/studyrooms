@@ -35,7 +35,11 @@ public class Reservation {
     @Column(nullable = false, length = 20)
     private ReservationStatus status;
 
-    public Reservation(Long id, User user, StudySpace studySpace, LocalDate date, LocalTime startTime, LocalTime endTime, ReservationStatus status) {
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean demo;
+
+    public Reservation(Long id, User user, StudySpace studySpace, LocalDate date, LocalTime startTime,
+                       LocalTime endTime, ReservationStatus status, boolean demo) {
         this.id = id;
         this.user = user;
         this.studySpace = studySpace;
@@ -43,6 +47,7 @@ public class Reservation {
         this.startTime = startTime;
         this.endTime = endTime;
         this.status = status;
+        this.demo = demo;
     }
 
     public Reservation() {
@@ -102,5 +107,13 @@ public class Reservation {
 
     public void setStatus(ReservationStatus status) {
         this.status = status;
+    }
+
+    public boolean isDemo() {
+        return demo;
+    }
+
+    public void setDemo(boolean demo) {
+        this.demo = demo;
     }
 }
