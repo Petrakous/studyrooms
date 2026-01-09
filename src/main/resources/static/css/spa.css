@@ -161,6 +161,34 @@ button:disabled {
     gap: 12px;
 }
 
+/* Staff quick links */
+.staff-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.button-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-weight: 700;
+    transition: transform 120ms ease, box-shadow 120ms ease;
+    box-shadow: 0 8px 18px -10px rgba(37, 99, 235, 0.9);
+}
+
+.button-link:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 20px -10px rgba(37, 99, 235, 0.45);
+}
+
 /* --------------------------------------------------------------------------
    List Components
    Container and items for displaying collections of data
