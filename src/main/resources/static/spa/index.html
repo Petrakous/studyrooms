@@ -129,6 +129,112 @@
         <!-- Error display area (hidden by default) -->
         <pre id="reservations-error" class="error hidden"></pre>
     </section>
+
+    <!-- =====================================================
+         SECTION 5: STAFF - MANAGE SPACES
+         Staff-only tools for creating and removing study spaces.
+         ===================================================== -->
+    <section class="card hidden" id="staff-spaces-card">
+        <div class="card-header">
+            <h2>5. Manage spaces (staff)</h2>
+            <button id="reload-staff-spaces" type="button">Reload</button>
+        </div>
+        <p class="muted">Creates and manages study spaces using <code>/api/spaces</code>.</p>
+        <form id="staff-space-form">
+            <div class="field">
+                <label for="staff-space-name">Name</label>
+                <input type="text" id="staff-space-name" name="name" required>
+            </div>
+            <div class="field">
+                <label for="staff-space-description">Description</label>
+                <input type="text" id="staff-space-description" name="description">
+            </div>
+            <div class="field inline">
+                <div>
+                    <label for="staff-space-capacity">Capacity</label>
+                    <input type="number" id="staff-space-capacity" name="capacity" min="1" required>
+                </div>
+                <div>
+                    <label for="staff-space-open">Open</label>
+                    <input type="time" id="staff-space-open" name="openTime" required>
+                </div>
+                <div>
+                    <label for="staff-space-close">Close</label>
+                    <input type="time" id="staff-space-close" name="closeTime" required>
+                </div>
+            </div>
+            <div class="field">
+                <label>
+                    <input type="checkbox" id="staff-space-fullday" name="fullDay">
+                    Full day (open 24 hours)
+                </label>
+            </div>
+            <div class="actions">
+                <button type="submit" id="staff-space-submit">Create</button>
+                <span id="staff-space-status" class="pill pill-muted">Waiting</span>
+            </div>
+            <input type="hidden" id="staff-space-id" name="id">
+        </form>
+        <div id="staff-spaces-list" class="list">Sign in as staff to manage spaces.</div>
+        <pre id="staff-spaces-error" class="error hidden"></pre>
+    </section>
+
+    <!-- =====================================================
+         SECTION 6: STAFF - ALL RESERVATIONS
+         Staff-only list with cancellation controls.
+         ===================================================== -->
+    <section class="card hidden" id="staff-reservations-card">
+        <div class="card-header">
+            <h2>6. All reservations (staff)</h2>
+            <button id="reload-staff-reservations" type="button">Reload</button>
+        </div>
+        <p class="muted">Uses <code>GET /api/staff/reservations</code> and allows staff cancellation.</p>
+        <form id="staff-reservations-form" class="field inline">
+            <div>
+                <label for="staff-reservations-date">Filter by date</label>
+                <input type="date" id="staff-reservations-date" name="date">
+            </div>
+            <div class="actions">
+                <button type="submit">Apply filter</button>
+            </div>
+        </form>
+        <div id="staff-reservations-list" class="list">Sign in as staff to view reservations.</div>
+        <pre id="staff-reservations-error" class="error hidden"></pre>
+    </section>
+
+    <!-- =====================================================
+         SECTION 7: STAFF - OCCUPANCY STATISTICS
+         Staff-only occupancy stats for a selected space/date range.
+         ===================================================== -->
+    <section class="card hidden" id="staff-occupancy-card">
+        <div class="card-header">
+            <h2>7. Occupancy statistics (staff)</h2>
+            <button id="reload-staff-occupancy" type="button">Reload</button>
+        </div>
+        <p class="muted">Uses <code>GET /api/stats/occupancy</code> to show daily utilisation.</p>
+        <form id="staff-occupancy-form" class="field inline">
+            <div>
+                <label for="staff-occupancy-space">Study space</label>
+                <select id="staff-occupancy-space" name="spaceId" required>
+                    <option value="" disabled selected>Select a space</option>
+                </select>
+            </div>
+            <div>
+                <label for="staff-occupancy-start">Start date</label>
+                <input type="date" id="staff-occupancy-start" name="startDate" required>
+            </div>
+            <div>
+                <label for="staff-occupancy-end">End date</label>
+                <input type="date" id="staff-occupancy-end" name="endDate" required>
+            </div>
+            <div class="actions">
+                <button type="submit">Load stats</button>
+            </div>
+        </form>
+        <div id="staff-occupancy-summary" class="muted hidden"></div>
+        <div id="staff-occupancy-list" class="list">Sign in as staff to view occupancy.</div>
+        <pre id="staff-occupancy-error" class="error hidden"></pre>
+    </section>
 </div>
 
 <!-- Main JavaScript file handling all API interactions and UI updates -->

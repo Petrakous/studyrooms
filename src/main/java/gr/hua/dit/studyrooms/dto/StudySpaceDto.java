@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalTime;
 
@@ -44,18 +45,18 @@ public class StudySpaceDto {
      */
     private Integer capacity;
 
-    @NotNull(message = "Open time is required")
-    @Schema(description = "Opening time", example = "08:00:00")
+    @Schema(description = "Opening time (optional when fullDay is true)", example = "08:00:00")
     /**
-     * Opening time of the study space (e.g., 08:00:00). Required.
+     * Opening time of the study space (e.g., 08:00:00). Required unless fullDay is true.
      */
+    @DateTimeFormat(pattern = "HH:mm")
     private LocalTime openTime;
 
-    @NotNull(message = "Close time is required")
-    @Schema(description = "Closing time", example = "20:00:00")
+    @Schema(description = "Closing time (optional when fullDay is true)", example = "20:00:00")
     /**
-     * Closing time of the study space (e.g., 20:00:00). Required.
+     * Closing time of the study space (e.g., 20:00:00). Required unless fullDay is true.
      */
+    @DateTimeFormat(pattern = "HH:mm")
     private LocalTime closeTime;
 
     @Schema(description = "Marks the space as open all day")

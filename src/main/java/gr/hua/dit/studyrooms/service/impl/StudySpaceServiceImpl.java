@@ -1,12 +1,14 @@
 package gr.hua.dit.studyrooms.service.impl;
 
 import gr.hua.dit.studyrooms.entity.StudySpace;
+import gr.hua.dit.studyrooms.repository.ReservationRepository;
 import gr.hua.dit.studyrooms.repository.StudySpaceRepository;
 import gr.hua.dit.studyrooms.service.StudySpaceService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.time.LocalTime;
 
 
 // Service implementation for managing StudySpace entities
@@ -17,11 +19,14 @@ public class StudySpaceServiceImpl implements StudySpaceService {
 
     // Repository for StudySpace entity database operations
     private final StudySpaceRepository studySpaceRepository;
+    private final ReservationRepository reservationRepository;
 
 
     // Constructor injection of the repository
-    public StudySpaceServiceImpl(StudySpaceRepository studySpaceRepository) {
+    public StudySpaceServiceImpl(StudySpaceRepository studySpaceRepository,
+                                 ReservationRepository reservationRepository) {
         this.studySpaceRepository = studySpaceRepository;
+        this.reservationRepository = reservationRepository;
     }
 
 
@@ -76,12 +81,25 @@ public class StudySpaceServiceImpl implements StudySpaceService {
      */
     @Override
     public void deleteSpace(Long id) {
+        reservationRepository.deleteByStudySpaceId(id);
         studySpaceRepository.deleteById(id);
     }
 
     private void validateOperatingHours(StudySpace space) {
         if (space == null) {
             return;
+        }
+        if (space.isFullDay()) {
+            if (space.getOpenTime() == null) {
+                space.setOpenTime(LocalTime.MIDNIGHT);
+            }
+            if (space.getCloseTime() == null) {
+                space.setCloseTime(LocalTime.of(23, 59));
+            }
+            return;
+        }
+        if (space.getOpenTime() == null || space.getCloseTime() == null) {
+            throw new IllegalArgumentException("Open and close time are required unless Full day is selected.");
         }
         if (!space.isFullDay()
                 && space.getOpenTime() != null
