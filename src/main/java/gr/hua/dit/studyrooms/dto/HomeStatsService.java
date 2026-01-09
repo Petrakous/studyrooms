@@ -32,7 +32,7 @@ public class HomeStatsService {
 
         // 2) Spaces available now (απλά: ανοιχτοί χώροι αυτή την ώρα)
         long spacesOpenNow =
-                studySpaceRepository.countByOpenTimeLessThanEqualAndCloseTimeGreaterThan(now, now);
+                studySpaceRepository.countOpenNow(now);
 
         // 3) Total reservations today (όλων των χρηστών)
         long totalToday =

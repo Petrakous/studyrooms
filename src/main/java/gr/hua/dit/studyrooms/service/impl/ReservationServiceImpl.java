@@ -27,7 +27,6 @@ public class ReservationServiceImpl implements ReservationService {
     private static final int MAX_RESERVATIONS_PER_DAY = 3;
 
     private static final List<ReservationStatus> ACTIVE_RESERVATION_STATUSES = List.of(
-            ReservationStatus.PENDING,
             ReservationStatus.CONFIRMED
     );
 
@@ -193,6 +192,9 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     private void checkOpeningHours(StudySpace space, LocalTime startTime, LocalTime endTime) {
+        if (space.isFullDay()) {
+            return;
+        }
         if (startTime.isBefore(space.getOpenTime()) || endTime.isAfter(space.getCloseTime())) {
             throw new IllegalStateException("Reservation time outside study space opening hours");
         }
@@ -241,6 +243,7 @@ public class ReservationServiceImpl implements ReservationService {
         reservation.setEndTime(endTime);
         // All business rules executed above; persist confirmed reservation.
         reservation.setStatus(ReservationStatus.CONFIRMED);
+        reservation.setDemo(false);
 
         return reservationRepository.save(reservation);
     }

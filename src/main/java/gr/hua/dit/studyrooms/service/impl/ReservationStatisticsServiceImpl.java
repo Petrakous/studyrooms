@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 public class ReservationStatisticsServiceImpl implements ReservationStatisticsService {
 
     private static final EnumSet<ReservationStatus> ACTIVE_STATUSES = EnumSet.of(
-            ReservationStatus.PENDING,
             ReservationStatus.CONFIRMED
     );
 
@@ -43,7 +42,9 @@ public class ReservationStatisticsServiceImpl implements ReservationStatisticsSe
                 .filter(r -> ACTIVE_STATUSES.contains(r.getStatus()))
                 .collect(Collectors.groupingBy(Reservation::getDate));
 
-        long totalMinutes = Math.max(0, Duration.between(space.getOpenTime(), space.getCloseTime()).toMinutes());
+        long totalMinutes = space.isFullDay()
+                ? Duration.ofHours(23).plusMinutes(59).toMinutes()
+                : Math.max(0, Duration.between(space.getOpenTime(), space.getCloseTime()).toMinutes());
         long totalSeatMinutes = totalMinutes * Math.max(1, space.getCapacity());
 
         List<OccupancyStatsEntry> results = new ArrayList<>();

@@ -113,8 +113,9 @@ public class DataInitializer implements CommandLineRunner {
         User student2 = userRepository.findByUsername("student2").orElse(null);
         List<StudySpace> spaces = studySpaceRepository.findAll();
 
-        // Για να μην γεμίζουμε διπλές, μόνο όταν η DB είναι άδεια από reservations
-        if (student != null && !spaces.isEmpty() && reservationRepository.count() == 0) {
+        reservationRepository.deleteByDemoTrue();
+
+        if (student != null && !spaces.isEmpty()) {
 
             StudySpace roomA = spaces.get(0);
             StudySpace roomB = spaces.size() > 1 ? spaces.get(1) : roomA;
@@ -129,6 +130,7 @@ public class DataInitializer implements CommandLineRunner {
             r1.setStartTime(LocalTime.of(10, 0));
             r1.setEndTime(LocalTime.of(12, 0));
             r1.setStatus(ReservationStatus.CONFIRMED);
+            r1.setDemo(true);
             reservationRepository.save(r1);
 
             Reservation r2 = new Reservation();
@@ -137,7 +139,8 @@ public class DataInitializer implements CommandLineRunner {
             r2.setDate(LocalDate.now().plusDays(2));
             r2.setStartTime(LocalTime.of(14, 0));
             r2.setEndTime(LocalTime.of(15, 0));
-            r2.setStatus(ReservationStatus.PENDING);
+            r2.setStatus(ReservationStatus.CONFIRMED);
+            r2.setDemo(true);
             reservationRepository.save(r2);
 
             Reservation r3 = new Reservation();
@@ -147,6 +150,7 @@ public class DataInitializer implements CommandLineRunner {
             r3.setStartTime(LocalTime.of(18, 0));
             r3.setEndTime(LocalTime.of(20, 0));
             r3.setStatus(ReservationStatus.CANCELLED_BY_STAFF);
+            r3.setDemo(true);
             reservationRepository.save(r3);
 
             // --- Extra σταθερά demo για όλες τις καταστάσεις ---
@@ -159,6 +163,7 @@ public class DataInitializer implements CommandLineRunner {
             r4.setStartTime(LocalTime.of(9, 0));
             r4.setEndTime(LocalTime.of(11, 0));
             r4.setStatus(ReservationStatus.CANCELLED);
+            r4.setDemo(true);
             reservationRepository.save(r4);
 
             // NO_SHOW στο παρελθόν (για να βλέπεις penalty cases κτλ)
@@ -170,6 +175,7 @@ public class DataInitializer implements CommandLineRunner {
                 r5.setStartTime(LocalTime.of(12, 0));
                 r5.setEndTime(LocalTime.of(14, 0));
                 r5.setStatus(ReservationStatus.NO_SHOW);
+                r5.setDemo(true);
                 reservationRepository.save(r5);
             }
 
@@ -181,9 +187,10 @@ public class DataInitializer implements CommandLineRunner {
             r6.setStartTime(LocalTime.of(16, 0));
             r6.setEndTime(LocalTime.of(18, 0));
             r6.setStatus(ReservationStatus.CONFIRMED);
+            r6.setDemo(true);
             reservationRepository.save(r6);
 
-            // --- Random demo data: διαφορετικά κάθε run (σε φρέσκια DB) ---
+            // --- Random demo data: διαφορετικά κάθε run ---
 
             Random random = new Random();
 
@@ -216,10 +223,10 @@ public class DataInitializer implements CommandLineRunner {
                 int roll = random.nextInt(5);
                 switch (roll) {
                     case 0 -> status = ReservationStatus.CONFIRMED;
-                    case 1 -> status = ReservationStatus.PENDING;
-                    case 2 -> status = ReservationStatus.CANCELLED;
-                    case 3 -> status = ReservationStatus.CANCELLED_BY_STAFF;
-                    default -> status = ReservationStatus.NO_SHOW;
+                    case 1 -> status = ReservationStatus.CANCELLED;
+                    case 2 -> status = ReservationStatus.CANCELLED_BY_STAFF;
+                    case 3 -> status = ReservationStatus.NO_SHOW;
+                    default -> status = ReservationStatus.CONFIRMED;
                 }
 
                 Reservation demo = new Reservation();
@@ -229,6 +236,7 @@ public class DataInitializer implements CommandLineRunner {
                 demo.setStartTime(start);
                 demo.setEndTime(end);
                 demo.setStatus(status);
+                demo.setDemo(true);
 
                 reservationRepository.save(demo);
             }
@@ -250,6 +258,7 @@ public class DataInitializer implements CommandLineRunner {
                     existing.setCapacity(capacity);
                     existing.setOpenTime(openTime);
                     existing.setCloseTime(closeTime);
+                    existing.setFullDay(false);
                     return studySpaceRepository.save(existing);
                 })
                 .orElseGet(() -> {
@@ -259,6 +268,7 @@ public class DataInitializer implements CommandLineRunner {
                     space.setCapacity(capacity);
                     space.setOpenTime(openTime);
                     space.setCloseTime(closeTime);
+                    space.setFullDay(false);
                     return studySpaceRepository.save(space);
                 });
     }
