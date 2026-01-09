@@ -44,16 +44,17 @@ public class WeatherApiController {
      * HTTP Method: GET
      * Endpoint: GET /api/weather?lat={latitude}&lon={longitude}
      * 
-     * @param latitude the latitude coordinate (required parameter)
-     * @param longitude the longitude coordinate (required parameter)
+     * @param latitude the latitude coordinate (defaults to Harokopio University if omitted)
+     * @param longitude the longitude coordinate (defaults to Harokopio University if omitted)
      * @return ResponseEntity containing WeatherDto with current weather data
      * 
-     * Example: GET /api/weather?lat=37.9838&lon=23.7275
+     * Example: GET /api/weather?lat=37.9629&lon=23.7046
      */
     @Operation(summary = "Get current weather for coordinates")
     @GetMapping
-    public ResponseEntity<WeatherDto> getCurrentWeather(@RequestParam("lat") double latitude,
-                                                        @RequestParam("lon") double longitude) {
+    public ResponseEntity<WeatherDto> getCurrentWeather(
+            @RequestParam(value = "lat", defaultValue = "37.9629") double latitude,
+            @RequestParam(value = "lon", defaultValue = "23.7046") double longitude) {
         return ResponseEntity.ok(weatherService.getCurrentWeather(latitude, longitude));
     }
 
@@ -64,19 +65,19 @@ public class WeatherApiController {
      * HTTP Method: GET
      * Endpoint: GET /api/weather?lat={latitude}&lon={longitude}&at={datetime}
      * 
-     * @param latitude the latitude coordinate (required parameter)
-     * @param longitude the longitude coordinate (required parameter)
+     * @param latitude the latitude coordinate (defaults to Harokopio University if omitted)
+     * @param longitude the longitude coordinate (defaults to Harokopio University if omitted)
      * @param at the specific date and time for the weather forecast in ISO 8601 format
      *           (required parameter, format: YYYY-MM-DDTHH:mm:ss)
      * @return ResponseEntity containing WeatherDto with forecasted weather data for the specified time
      * 
-     * Example: GET /api/weather?lat=37.9838&lon=23.7275&at=2025-01-09T14:30:00
+     * Example: GET /api/weather?lat=37.9629&lon=23.7046&at=2025-01-09T14:30:00
      */
     @Operation(summary = "Get forecasted weather for coordinates at a specific time")
-    @GetMapping(params = {"lat", "lon", "at"})
+    @GetMapping(params = {"at"})
     public ResponseEntity<WeatherDto> getWeatherAt(
-            @RequestParam("lat") double latitude,
-            @RequestParam("lon") double longitude,
+            @RequestParam(value = "lat", defaultValue = "37.9629") double latitude,
+            @RequestParam(value = "lon", defaultValue = "23.7046") double longitude,
             @RequestParam("at") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime at) {
         return ResponseEntity.ok(weatherService.getWeather(latitude, longitude, at));
     }
