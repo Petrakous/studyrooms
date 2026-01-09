@@ -1,25 +1,42 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<!-- ============================================================
+     STAFF RESERVATIONS PAGE
+     This template displays all reservations for staff members.
+     Staff can filter by date, cancel reservations, mark no-shows,
+     and close entire spaces for a day.
+     ============================================================ -->
+
+<!-- Include shared head section from layout.html with page title -->
 <head th:replace="~{layout :: head('All Reservations (Staff) - StudyRooms')}">
     <title>All Reservations (Staff) - StudyRooms</title>
 </head>
 
+<!-- Include shared body/navigation from layout.html, injecting our content fragment -->
 <body th:replace="~{layout :: body('', ~{::content})}">
 <div th:fragment="content">
 
+    <!-- ========== PAGE HEADER ========== -->
+    <!-- Title and navigation to occupancy statistics -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">Reservations (Staff View)</h2>
         <a th:href="@{/staff/occupancy}" class="btn btn-outline-primary">Occupancy stats</a>
     </div>
 
-    <!-- Flash message after close-space action -->
+    <!-- ========== FLASH MESSAGES ========== -->
+    <!-- Display success/info messages (e.g., after cancelling reservations) -->
     <div th:if="${message}" class="alert alert-info" th:text="${message}"></div>
+    <!-- Display error messages (e.g., validation failures) -->
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-    <!-- Filter by date (single date, auto-submit on change) -->
+    <!-- ========== DATE FILTER FORM ========== -->
+    <!-- Allows staff to filter reservations by a specific date.
+         The form auto-submits when the date is changed (onchange event). -->
     <form th:action="@{/staff/reservations}" method="get"
           class="row g-2 align-items-end mb-3">
 
+        <!-- Date picker input - pre-filled with selectedDate from controller -->
         <div class="col-auto">
             <label for="date" class="form-label mb-0">Date</label>
             <input id="date" type="date" name="date"
@@ -28,6 +45,7 @@
                    onchange="this.form.submit()">
         </div>
 
+        <!-- "Today" button - resets date filter to current date -->
         <div class="col-auto">
             <label class="form-label mb-0">&nbsp;</label>
             <!-- Clear → Today -->
@@ -37,25 +55,30 @@
         </div>
     </form>
 
-    <!-- Close space for a whole day (cancel all reservations) -->
+    <!-- ========== CLOSE SPACE CARD ========== -->
+    <!-- This section allows staff to close an entire study space for a specific day.
+         When submitted, ALL reservations for the selected space on the selected date
+         will be cancelled (marked as CANCELLED_BY_STAFF). -->
     <div class="card mb-3">
         <div class="card-body">
             <h5 class="card-title mb-3">Close space for a day (cancel all reservations)</h5>
 
             <form th:action="@{/staff/close-space}" method="post" class="row g-2 align-items-end">
-                       <input type="hidden"
-                              th:if="${_csrf != null}"
-                              th:name="${_csrf.parameterName}"
-                              th:value="${_csrf.token}"/>
+                <!-- CSRF token for security - prevents Cross-Site Request Forgery attacks -->
+                <input type="hidden"
+                       th:if="${_csrf != null}"
+                       th:name="${_csrf.parameterName}"
+                       th:value="${_csrf.token}"/>
 
-                <!-- στέλνουμε τη selectedDate ως hidden, αλλά ΔΕΝ πιάνει columns -->
+                <!-- Pass the currently selected filter date to the controller -->
                 <input type="hidden" name="date" th:value="${selectedDate}"/>
 
-                <!-- Space select -->
+                <!-- Space dropdown - populated from 'spaces' list provided by controller -->
                 <div class="col-md-6 col-lg-4">
                     <label for="spaceId" class="form-label mb-0">Space</label>
                     <select id="spaceId" name="spaceId" class="form-select" required>
                         <option value="" disabled selected>Select space</option>
+                        <!-- Iterate over all available spaces and create option elements -->
                         <option th:each="s : ${spaces}"
                                 th:value="${s.id}"
                                 th:text="${s.name}">
@@ -63,7 +86,7 @@
                     </select>
                 </div>
 
-                <!-- Button δίπλα στο select -->
+                <!-- Submit button with JavaScript confirmation dialog -->
                 <div class="col-md-6 col-lg-3">
                     <label class="form-label mb-0">&nbsp;</label>
                     <button type="submit" class="btn btn-danger w-100"
@@ -75,9 +98,12 @@
         </div>
     </div>
 
-    <!-- Reservations table -->
+    <!-- ========== RESERVATIONS TABLE ========== -->
+    <!-- Displays all reservations for the selected date with sortable columns.
+         Each row shows reservation details and available actions. -->
     <div class="table-responsive">
         <table class="table table-striped table-hover align-middle">
+            <!-- Table header with column titles -->
             <thead class="table-light">
             <tr>
                 <th>User</th>
@@ -90,16 +116,28 @@
             </thead>
 
             <tbody>
-
+            <!-- ========== RESERVATION ROWS ========== -->
+            <!-- Iterate over each reservation from the 'reservations' list -->
             <tr th:each="r : ${reservations}">
+                <!-- Username of the person who made the reservation -->
                 <td th:text="${r.user.username}">student</td>
+                <!-- Name of the study space -->
                 <td th:text="${r.studySpace.name}">Room A</td>
+                <!-- Reservation date -->
                 <td th:text="${r.date}">2025-01-01</td>
+                <!-- Time range: start time - end time -->
                 <td>
                     <span th:text="${r.startTime}">10:00</span>
                     -
                     <span th:text="${r.endTime}">12:00</span>
                 </td>
+                <!-- Status badge with dynamic color based on reservation status:
+                     CONFIRMED = green (bg-success)
+                     PENDING = yellow (bg-warning)
+                     CANCELLED = gray (bg-secondary)
+                     CANCELLED_BY_STAFF = red (bg-danger)
+                     NO_SHOW = dark (bg-dark)
+                     Other = light gray -->
                 <td>
                     <span class="badge"
                           th:classappend="${r.status} == 'CONFIRMED' ? ' bg-success' :
@@ -110,24 +148,32 @@
                         CONFIRMED
                     </span>
                 </td>
+                <!-- ========== ACTIONS COLUMN ========== -->
+                <!-- Contains Cancel and No-show buttons for staff actions -->
                 <td>
+                    <!-- Calculate if the reservation is eligible for no-show marking:
+                         - Must be CONFIRMED status
+                         - AND reservation date is in the past OR (date is today AND start time has passed) -->
                     <div th:with="noShowEligible=${r.status == T(gr.hua.dit.studyrooms.entity.ReservationStatus).CONFIRMED
                             and (r.date.isBefore(today)
                             or (r.date.isEqual(today) and r.startTime.isBefore(nowTime)))}"
                          class="d-inline">
+
+                    <!-- ===== CANCEL BUTTON ===== -->
+                    <!-- Only show cancel button if reservation is not already cancelled -->
                     <form th:if="${r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED
               and r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED_BY_STAFF}"
                           th:action="@{/staff/reservations/{id}/cancel(id=${r.id})}"
                           method="post"
                           class="d-inline">
 
-                        <!-- CSRF -->
-                               <input type="hidden"
-                                      th:if="${_csrf != null}"
-                                      th:name="${_csrf.parameterName}"
-                                      th:value="${_csrf.token}" />
+                        <!-- CSRF token for security -->
+                        <input type="hidden"
+                               th:if="${_csrf != null}"
+                               th:name="${_csrf.parameterName}"
+                               th:value="${_csrf.token}" />
 
-                        <!-- Στέλνουμε την ημερομηνία φίλτρου πίσω στον controller -->
+                        <!-- Pass selected date to maintain filter state after action -->
                         <input type="hidden" name="date"
                                th:value="${selectedDate}" />
 
@@ -137,17 +183,24 @@
                             Cancel
                         </button>
                     </form>
+
+                        <!-- ===== NO-SHOW BUTTON ===== -->
+                        <!-- Marks a reservation as no-show (user didn't arrive).
+                             Button is disabled unless the reservation time has passed. -->
                         <form th:action="@{/staff/reservations/{id}/no-show(id=${r.id})}"
                               method="post"
                               class="d-inline">
+                            <!-- CSRF token for security -->
                             <input type="hidden"
                                    th:if="${_csrf != null}"
                                    th:name="${_csrf.parameterName}"
                                    th:value="${_csrf.token}" />
 
+                            <!-- Pass selected date to maintain filter state after action -->
                             <input type="hidden" name="date"
                                    th:value="${selectedDate}" />
 
+                            <!-- Button disabled unless noShowEligible is true -->
                             <button type="submit"
                                     class="btn btn-sm btn-outline-dark"
                                     th:disabled="${!noShowEligible}"
@@ -159,6 +212,8 @@
                 </td>
             </tr>
 
+            <!-- ========== EMPTY STATE ========== -->
+            <!-- Displayed when no reservations match the filter criteria -->
             <tr th:if="${#lists.isEmpty(reservations)}">
                 <td colspan="6" class="text-center text-muted">
                     No reservations found for the selected criteria.
@@ -169,6 +224,8 @@
         </table>
     </div>
 
+    <!-- ========== NAVIGATION ========== -->
+    <!-- Back button to return to the main dashboard -->
     <a th:href="@{/dashboard}" class="btn btn-secondary mt-3">
         Back to Dashboard
     </a>

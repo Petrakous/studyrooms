@@ -11,24 +11,37 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+
+// Adapter for fetching weather data from the Open-Meteo API
 @Service
 public class OpenMeteoWeatherAdapter implements WeatherPort {
 
+
+    // Logger for logging warnings and errors
     private static final Logger logger = LoggerFactory.getLogger(OpenMeteoWeatherAdapter.class);
 
+
+    // WebClient instance for making HTTP requests to Open-Meteo
     private final WebClient openMeteoWebClient;
 
+
+    // Constructor injection of the WebClient bean
     public OpenMeteoWeatherAdapter(@Qualifier("openMeteoWebClient") WebClient openMeteoWebClient) {
         this.openMeteoWebClient = openMeteoWebClient;
     }
 
     @Override
+
+    /**
+     * Fetches the current weather for the given latitude and longitude from Open-Meteo API.
+     * Maps the response to WeatherDto.
+     */
     public WeatherDto getCurrentWeather(double latitude, double longitude) {
         try {
+            // Build and execute the GET request to Open-Meteo
             CurrentWeatherResponse response = openMeteoWebClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/forecast")
@@ -41,10 +54,12 @@ public class OpenMeteoWeatherAdapter implements WeatherPort {
                     .bodyToMono(CurrentWeatherResponse.class)
                     .block();
 
+            // Check for null response
             if (response == null || response.current == null) {
                 throw new ExternalServiceException("Weather service unavailable");
             }
 
+            // Map API response to WeatherDto
             WeatherDto dto = new WeatherDto();
             dto.setTemperatureCelsius(response.current.temperature2m);
             dto.setWindSpeed(response.current.windSpeed10m);
@@ -61,16 +76,24 @@ public class OpenMeteoWeatherAdapter implements WeatherPort {
     }
 
     @Override
+
+    /**
+     * Fetches the weather forecast for a specific date and time.
+     * If 'at' is null, returns the current weather.
+     * Otherwise, finds the closest available forecast data for the requested time.
+     */
     public WeatherDto getWeatherAt(double latitude, double longitude, LocalDateTime at) {
         if (at == null) {
             return getCurrentWeather(latitude, longitude);
         }
 
         try {
+            // Format date and normalize time to the hour
             String date = at.toLocalDate().toString();
             LocalDateTime normalized = at.withMinute(0).withSecond(0).withNano(0);
             String target = normalized.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
 
+            // Build and execute the GET request for hourly forecast
             ForecastResponse response = openMeteoWebClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/forecast")
@@ -85,19 +108,23 @@ public class OpenMeteoWeatherAdapter implements WeatherPort {
                     .bodyToMono(ForecastResponse.class)
                     .block();
 
+            // Check for null response
             if (response == null || response.hourly == null || response.hourly.time == null) {
                 throw new ExternalServiceException("Weather service unavailable");
             }
 
+            // Try to find the exact or closest time index in the forecast
             int index = findExactIndex(response.hourly.time, target);
             if (index == -1) {
                 index = findClosestIndex(response.hourly.time, normalized);
             }
 
+            // If no valid index found, throw exception
             if (index == -1 || !response.hourly.hasValuesAt(index)) {
                 throw new ExternalServiceException("No forecast data available for requested time");
             }
 
+            // Map forecast data to WeatherDto
             WeatherDto dto = new WeatherDto();
             dto.setTimestamp(LocalDateTime.parse(response.hourly.time.get(index)));
             dto.setTemperatureCelsius(response.hourly.temperature2m.get(index));
@@ -113,6 +140,11 @@ public class OpenMeteoWeatherAdapter implements WeatherPort {
         }
     }
 
+
+    /**
+     * Finds the index of the exact time string in the list.
+     * Returns -1 if not found.
+     */
     private int findExactIndex(List<String> times, String target) {
         for (int i = 0; i < times.size(); i++) {
             if (target.equals(times.get(i))) {
@@ -122,6 +154,11 @@ public class OpenMeteoWeatherAdapter implements WeatherPort {
         return -1;
     }
 
+
+    /**
+     * Finds the index of the time closest to the target LocalDateTime.
+     * Returns -1 if the list is empty.
+     */
     private int findClosestIndex(List<String> times, LocalDateTime target) {
         int closestIndex = -1;
         long smallestDiff = Long.MAX_VALUE;
@@ -137,6 +174,8 @@ public class OpenMeteoWeatherAdapter implements WeatherPort {
         return closestIndex;
     }
 
+
+    // Internal class for mapping the current weather API response
     private static class CurrentWeatherResponse {
         private CurrentData current;
 
@@ -149,6 +188,8 @@ public class OpenMeteoWeatherAdapter implements WeatherPort {
         }
     }
 
+
+    // Internal class for mapping the 'current' field in the API response
     private static class CurrentData {
         private String time;
         @JsonProperty("temperature_2m")
@@ -200,6 +241,8 @@ public class OpenMeteoWeatherAdapter implements WeatherPort {
         }
     }
 
+
+    // Internal class for mapping the forecast API response
     private static class ForecastResponse {
         private Hourly hourly;
 
@@ -212,6 +255,8 @@ public class OpenMeteoWeatherAdapter implements WeatherPort {
         }
     }
 
+
+    // Internal class for mapping the 'hourly' field in the forecast response
     private static class Hourly {
         private List<String> time;
         @JsonProperty("temperature_2m")
@@ -246,6 +291,9 @@ public class OpenMeteoWeatherAdapter implements WeatherPort {
             this.weatherCode = weatherCode;
         }
 
+        /**
+         * Checks if all weather value lists have a value at the given index.
+         */
         boolean hasValuesAt(int index) {
             return temperature2m != null && windSpeed10m != null && precipitation != null && weatherCode != null
                     && index < temperature2m.size() && index < windSpeed10m.size()

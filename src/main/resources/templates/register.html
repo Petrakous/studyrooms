@@ -1,48 +1,81 @@
 <!DOCTYPE html>
+<!-- 
+    Registration Page Template
+    This Thymeleaf template provides a user registration form for the StudyRooms application.
+    It uses Bootstrap 5 for styling and integrates with Spring Security for CSRF protection.
+-->
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<!-- Include the shared head section from the layout template with page-specific title -->
 <head th:replace="~{layout :: head('Register - StudyRooms')}"></head>
 
+<!-- 
+    Replace body with the layout template's body structure.
+    The second parameter (~{::content}) injects this page's content fragment into the layout.
+-->
 <body th:replace="~{layout :: body('', ~{::content})}">
+
+<!-- Content fragment that will be inserted into the layout template -->
 <div th:fragment="content">
 
+    <!-- Centered container with responsive column sizing (6 cols on medium, 5 on large screens) -->
     <div class="row justify-content-center my-5">
         <div class="col-md-6 col-lg-5">
 
             <h2 class="mb-4 text-center">Create Account</h2>
 
-            <!-- Global error -->
+            <!-- Global error message - displays when controller adds an 'error' attribute to the model -->
             <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
+            <!-- Registration form card with subtle shadow effect -->
             <div class="card shadow-sm">
                 <div class="card-body">
+
+                    <!-- 
+                        Registration form configuration:
+                        - th:action: Generates the URL for the /register endpoint
+                        - th:object: Binds this form to the 'user' model attribute (UserDTO or similar)
+                    -->
                     <form th:action="@{/register}" method="post" th:object="${user}">
 
+                        <!-- 
+                            CSRF Token (Cross-Site Request Forgery protection)
+                            Spring Security requires this token for POST requests.
+                            Hidden field automatically included when CSRF is enabled.
+                        -->
                         <input type="hidden"
                                th:if="${_csrf != null}"
                                th:name="${_csrf.parameterName}"
                                th:value="${_csrf.token}"/>
 
+                        <!-- Username field - th:field binds to user.username property -->
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
                             <input id="username" type="text" th:field="*{username}"
                                    class="form-control" required>
+                            <!-- Displays validation errors for username (e.g., "Username already exists") -->
                             <div class="text-danger small" th:errors="*{username}"></div>
                         </div>
 
+                        <!-- Password field - th:field binds to user.password property -->
                         <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
                             <input id="password" type="password" th:field="*{password}"
                                    class="form-control" required>
+                            <!-- Displays validation errors for password (e.g., minimum length requirements) -->
                             <div class="text-danger small" th:errors="*{password}"></div>
                         </div>
 
+                        <!-- Confirm Password field - used to verify user typed password correctly -->
                         <div class="mb-3">
                             <label for="confirmPassword" class="form-label">Confirm Password</label>
                             <input id="confirmPassword" type="password" th:field="*{confirmPassword}"
                                    class="form-control" required>
+                            <!-- Displays validation errors (e.g., "Passwords do not match") -->
                             <div class="text-danger small" th:errors="*{confirmPassword}"></div>
                         </div>
 
+                        <!-- Full Name field - user's display name -->
                         <div class="mb-3">
                             <label for="fullName" class="form-label">Full Name</label>
                             <input id="fullName" type="text" th:field="*{fullName}"
@@ -50,13 +83,16 @@
                             <div class="text-danger small" th:errors="*{fullName}"></div>
                         </div>
 
+                        <!-- Email field - uses HTML5 email type for basic client-side validation -->
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
                             <input id="email" type="email" th:field="*{email}"
                                    class="form-control" required>
+                            <!-- Displays validation errors (e.g., "Invalid email format" or "Email already registered") -->
                             <div class="text-danger small" th:errors="*{email}"></div>
                         </div>
 
+                        <!-- Submit button - d-grid makes it full-width -->
                         <div class="d-grid mt-3">
                             <button type="submit" class="btn btn-success">
                                 Register
@@ -67,10 +103,12 @@
 
                     <hr>
 
+                    <!-- Link to login page for users who already have an account -->
                     <p class="mb-0 text-center">
                         Already have an account?
                         <a th:href="@{/login}">Login</a>
                     </p>
+
                 </div>
             </div>
 

@@ -21,17 +21,23 @@ import java.util.List;
 
 @Service
 @Transactional
+/**
+ * Implementation of ReservationService that handles all business logic for study room reservations.
+ * Enforces rules such as max reservations per day, duration limits, holiday checks, penalties, and capacity.
+ * Integrates with repositories and external services for persistence and notifications.
+ */
 public class ReservationServiceImpl implements ReservationService {
 
-    // Μέχρι 3 ενεργές κρατήσεις ανά μέρα ανά φοιτητή
-    private static final int MAX_RESERVATIONS_PER_DAY = 3;
+        // Maximum 3 active reservations per day per student
+        private static final int MAX_RESERVATIONS_PER_DAY = 3;
 
-    private static final List<ReservationStatus> ACTIVE_RESERVATION_STATUSES = List.of(
+        // Statuses considered "active" for reservation counting and capacity
+        private static final List<ReservationStatus> ACTIVE_RESERVATION_STATUSES = List.of(
             ReservationStatus.CONFIRMED
-    );
+        );
 
-    // Μέγιστη διάρκεια μίας κράτησης: 2 ώρες (120 λεπτά)
-    private static final int MAX_RESERVATION_DURATION_MINUTES = 120;
+        // Maximum duration of a reservation: 2 hours (120 minutes)
+        private static final int MAX_RESERVATION_DURATION_MINUTES = 120;
 
     private final ReservationRepository reservationRepository;
     private final StudySpaceRepository studySpaceRepository;
@@ -39,6 +45,9 @@ public class ReservationServiceImpl implements ReservationService {
     private final HolidayApiPort holidayApiPort;
     private final NotificationService notificationService;
 
+    /**
+     * Constructor for dependency injection.
+     */
     public ReservationServiceImpl(ReservationRepository reservationRepository,
                                   StudySpaceRepository studySpaceRepository,
                                   HolidayApiPort holidayApiPort,
@@ -53,45 +62,67 @@ public class ReservationServiceImpl implements ReservationService {
 
 
     @Override
+
+    /**
+     * Returns all reservations for a given user.
+     */
     public List<Reservation> getReservationsForUser(User user) {
         return reservationRepository.findByUser(user);
     }
 
     @Override
+
+    /**
+     * Returns all reservations for a specific date.
+     */
     public List<Reservation> getReservationsForDate(LocalDate date) {
         return reservationRepository.findByDate(date);
     }
 
     @Override
+
+    /**
+     * Returns all reservations in the system.
+     */
     public List<Reservation> getAll() {
         return reservationRepository.findAll();
     }
 
     @Override
+
+    /**
+     * Creates a new reservation for a user, enforcing all business rules.
+     * Notifies the user upon successful creation.
+     */
     public Reservation createReservation(User user, Long studySpaceId,
                                          LocalDate date, LocalTime startTime, LocalTime endTime) {
-        StudySpace space = loadStudySpace(studySpaceId);
-        checkUserNotPenalized(user);
-        checkNotInPast(date, startTime);
-        checkHoliday(date);
-        checkSpaceClosedByStaff(space, date);
-        checkMaxReservationsPerDay(user, date, ACTIVE_RESERVATION_STATUSES);
-        checkTimeOrder(startTime, endTime);
-        checkOpeningHours(space, startTime, endTime);
-        checkDurationWithinLimit(startTime, endTime);
-        checkCapacityForTimeRange(space, date, startTime, endTime);
+        StudySpace space = loadStudySpace(studySpaceId); // Load the study space entity
+        checkUserNotPenalized(user); // Block if user is penalized
+        checkNotInPast(date, startTime); // Block if reservation is in the past
+        checkHoliday(date); // Block if date is a public holiday
+        checkSpaceClosedByStaff(space, date); // Block if staff closed the space for that date
+        checkMaxReservationsPerDay(user, date, ACTIVE_RESERVATION_STATUSES); // Enforce max per day
+        checkTimeOrder(startTime, endTime); // Validate time order
+        checkOpeningHours(space, startTime, endTime); // Enforce opening hours
+        checkDurationWithinLimit(startTime, endTime); // Enforce max duration
+        checkCapacityForTimeRange(space, date, startTime, endTime); // Enforce capacity
 
         Reservation reservation = persistReservation(user, space, date, startTime, endTime);
-        notificationService.notifyReservationCreated(reservation);
+        notificationService.notifyReservationCreated(reservation); // Notify user
         return reservation;
     }
 
     @Override
+
+    /**
+     * Cancels a reservation by the user who owns it. Only the owner can cancel their reservation.
+     * Notifies the user upon cancellation.
+     */
     public void cancelReservation(Long reservationId, User user) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("Reservation not found: " + reservationId));
 
-        // προς το παρόν: μόνο ο ίδιος ο χρήστης μπορεί να ακυρώσει τη δική του κράτηση
+        // Only the user who made the reservation can cancel it
         if (!reservation.getUser().getId().equals(user.getId())) {
             throw new SecurityException("You cannot cancel another user's reservation.");
         }
@@ -102,6 +133,10 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
+
+    /**
+     * Cancels a reservation as staff. Status is set to CANCELLED_BY_STAFF and user is notified.
+     */
     public void cancelReservationAsStaff(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("Reservation not found: " + reservationId));
@@ -112,9 +147,13 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
+
+    /**
+     * Cancels all reservations for a given study space and date as staff.
+     * Notifies affected users. Returns the number of cancelled reservations.
+     */
     @Transactional
     public int cancelByStaffForSpaceAndDate(Long spaceId, LocalDate date) {
-
         StudySpace space = studySpaceRepository.findById(spaceId)
                 .orElseThrow(() -> new IllegalArgumentException("Space not found"));
 
@@ -124,6 +163,7 @@ public class ReservationServiceImpl implements ReservationService {
         int cancelled = 0;
         List<Reservation> toNotify = new ArrayList<>();
         for (Reservation r : reservations) {
+            // Only cancel reservations that are not already cancelled
             if (r.getStatus() != ReservationStatus.CANCELLED
                     && r.getStatus() != ReservationStatus.CANCELLED_BY_STAFF) {
 
@@ -141,6 +181,10 @@ public class ReservationServiceImpl implements ReservationService {
         return cancelled;
     }
 
+
+    /**
+     * Throws if the reservation is in the past (date or time).
+     */
     private void checkNotInPast(LocalDate date, LocalTime startTime) {
         LocalDate today = LocalDate.now();
         if (date.isBefore(today)) {
@@ -152,6 +196,10 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
+
+    /**
+     * Throws if start or end time is missing, or end is not after start.
+     */
     private void checkTimeOrder(LocalTime startTime, LocalTime endTime) {
         if (startTime == null || endTime == null) {
             throw new IllegalStateException("Start and end time are required.");
@@ -161,17 +209,29 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
+
+    /**
+     * Throws if the date is a public holiday (uses external API).
+     */
     private void checkHoliday(LocalDate date) {
         if (holidayApiPort.isHoliday(date)) {
             throw new IllegalStateException("Reservations are not allowed on public holidays.");
         }
     }
 
+
+    /**
+     * Loads a StudySpace by ID or throws if not found.
+     */
     private StudySpace loadStudySpace(Long studySpaceId) {
         return studySpaceRepository.findById(studySpaceId)
                 .orElseThrow(() -> new IllegalArgumentException("StudySpace not found: " + studySpaceId));
     }
 
+
+    /**
+     * Throws if the study space is closed by staff for the given date.
+     */
     private void checkSpaceClosedByStaff(StudySpace space, LocalDate date) {
         if (reservationRepository.existsByStudySpaceAndDateAndStatus(space, date, ReservationStatus.CANCELLED_BY_STAFF)) {
             throw new IllegalStateException(
@@ -181,6 +241,10 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
+
+    /**
+     * Throws if the user has reached the max number of active reservations for the day.
+     */
     private void checkMaxReservationsPerDay(User user, LocalDate date, List<ReservationStatus> activeStatuses) {
         long activeCountForDay = reservationRepository.countByUserAndDateAndStatusIn(user, date, activeStatuses);
         if (activeCountForDay >= MAX_RESERVATIONS_PER_DAY) {
@@ -191,6 +255,10 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
+
+    /**
+     * Throws if reservation is outside the study space's opening hours.
+     */
     private void checkOpeningHours(StudySpace space, LocalTime startTime, LocalTime endTime) {
         if (space.isFullDay()) {
             return;
@@ -200,6 +268,10 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
+
+    /**
+     * Throws if reservation duration exceeds the allowed maximum.
+     */
     private void checkDurationWithinLimit(LocalTime startTime, LocalTime endTime) {
         long minutes = Duration.between(startTime, endTime).toMinutes();
         if (minutes > MAX_RESERVATION_DURATION_MINUTES) {
@@ -207,6 +279,10 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
+
+    /**
+     * Throws if the number of overlapping active reservations meets or exceeds the space's capacity.
+     */
     private void checkCapacityForTimeRange(StudySpace space, LocalDate date, LocalTime startTime, LocalTime endTime) {
         long overlapping = reservationRepository.countOverlappingReservations(
                 space,
@@ -223,6 +299,10 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
+
+    /**
+     * Throws if the user is currently penalized (blocked from making reservations).
+     */
     private void checkUserNotPenalized(User user) {
         LocalDate penaltyUntil = user.getPenaltyUntil();
         LocalDate today = LocalDate.now();
@@ -233,6 +313,10 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
+
+    /**
+     * Persists a new confirmed reservation after all business rules have passed.
+     */
     private Reservation persistReservation(User user, StudySpace space, LocalDate date,
                                            LocalTime startTime, LocalTime endTime) {
         Reservation reservation = new Reservation();
@@ -249,8 +333,12 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    public void markNoShow(Long reservationId) {
 
+    /**
+     * Marks a reservation as no-show (user did not show up), applies a 3-day penalty to the user.
+     * Only allowed for confirmed and past reservations.
+     */
+    public void markNoShow(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("Reservation not found: " + reservationId));
 
@@ -264,16 +352,19 @@ public class ReservationServiceImpl implements ReservationService {
 
         User user = reservation.getUser();
 
-        // Επιβολή penalty 3 ημερών
+        // Impose a 3-day penalty
         user.setPenaltyUntil(LocalDate.now().plusDays(3));
 
-        // Αλλαγή κατάστασης κράτησης
+        // Change reservation status
         reservation.setStatus(ReservationStatus.NO_SHOW);
 
         reservationRepository.save(reservation);
         userRepository.save(user);
     }
 
+    /**
+     * Returns true if the reservation is eligible to be marked as no-show (i.e., in the past).
+     */
     private boolean isNoShowEligible(Reservation reservation) {
         LocalDate today = LocalDate.now();
         if (reservation.getDate().isBefore(today)) {

@@ -1,32 +1,60 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<!-- ============================================================================
+     HEAD FRAGMENT
+     Reusable <head> section that child templates can include.
+     Usage in child: <head th:replace="~{layout :: head('Page Title')}">
+     @param title - The page title to display in the browser tab
+     ============================================================================ -->
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
+    <!-- Dynamic title: displays the passed 'title' parameter, fallback is 'StudyRooms' -->
     <title th:text="${title}">StudyRooms</title>
 
+    <!-- Responsive viewport meta tag for mobile-friendly design -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Bootstrap 5 CSS -->
+    <!-- Bootstrap 5 CSS - Provides styling and responsive grid system -->
     <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
             rel="stylesheet"
     >
 </head>
 
+<!-- ============================================================================
+     BODY FRAGMENT
+     Main layout structure that child templates inherit.
+     Usage in child: <body th:replace="~{layout :: body('pageName', ~{::main})}">
+     @param activePage - String identifier for the current page (used to highlight nav item)
+     @param content    - The page-specific content fragment to inject into the layout
+     ============================================================================ -->
 <body th:fragment="body(activePage, content)">
+
+<!-- ======================= NAVIGATION BAR ======================= -->
+<!-- Dark-themed Bootstrap navbar with responsive collapsible menu -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
+
+        <!-- Brand/Logo - Links to home page using Thymeleaf URL syntax -->
         <a class="navbar-brand" th:href="@{/}">StudyRooms</a>
 
+        <!-- Mobile hamburger menu toggle button (visible on small screens) -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#mainNavbar" aria-controls="mainNavbar"
                 aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
+        <!-- Collapsible navigation content -->
         <div class="collapse navbar-collapse" id="mainNavbar">
+
+            <!-- ============== LEFT-ALIGNED NAV ITEMS ============== -->
+            <!-- me-auto pushes the right nav items to the far right -->
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <!-- Dashboard -->
+
+                <!-- Dashboard Link -->
+                <!-- th:classappend adds 'active' class when activePage matches 'dashboard' -->
                 <li class="nav-item">
                     <a class="nav-link"
                        th:href="@{/dashboard}"
@@ -35,7 +63,8 @@
                     </a>
                 </li>
 
-                <!-- Spaces -->
+                <!-- Spaces (Study Rooms) Link -->
+                <!-- Shows list of available study spaces -->
                 <li class="nav-item">
                     <a class="nav-link"
                        th:href="@{/spaces}"
@@ -44,14 +73,16 @@
                     </a>
                 </li>
 
-                <!-- SPA client (JWT) -->
+                <!-- SPA Client Link (JWT-authenticated Single Page Application) -->
+                <!-- Opens in new tab with noopener for security -->
                 <li class="nav-item">
                     <a class="nav-link" href="/spa/index.html" target="_blank" rel="noopener">
                         SPA Client
                     </a>
                 </li>
 
-                <!-- Staff occupancy stats -->
+                <!-- Staff-Only: Occupancy Statistics -->
+                <!-- th:if with Spring Security authorization - only visible to STAFF role -->
                 <li class="nav-item" th:if="${#authorization.expression('hasRole(''STAFF'')')}">
                     <a class="nav-link"
                        th:href="@{/staff/occupancy}"
@@ -60,7 +91,8 @@
                     </a>
                 </li>
 
-                <!-- My Reservations -->
+                <!-- My Reservations Link -->
+                <!-- Shows the current user's reservation history -->
                 <li class="nav-item">
                     <a class="nav-link"
                        th:href="@{/reservations/my}"
@@ -70,16 +102,22 @@
                 </li>
             </ul>
 
-            <!-- Right side (login/logout) -->
+            <!-- ============== RIGHT-ALIGNED NAV ITEMS ============== -->
+            <!-- Authentication-related items (login/logout) -->
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
 
-                <!-- Όταν είναι συνδεδεμένος -->
+                <!-- AUTHENTICATED USER: Show username and logout button -->
+                <!-- Only visible when user is logged in -->
                 <li class="nav-item d-flex align-items-center"
                     th:if="${#authorization.expression('isAuthenticated()')}">
 
+                    <!-- Display the authenticated user's username -->
                     <span class="navbar-text me-2" th:text="${#authentication.name}">user</span>
 
+                    <!-- Logout Form -->
+                    <!-- Uses POST method with CSRF token for security (prevents CSRF attacks) -->
                     <form th:action="@{/logout}" method="post" class="d-inline">
+                        <!-- CSRF token: Required by Spring Security for POST requests -->
                         <input type="hidden"
                                th:if="${_csrf != null}"
                                th:name="${_csrf.parameterName}"
@@ -90,7 +128,8 @@
                     </form>
                 </li>
 
-                <!-- Όταν ΔΕΝ είναι συνδεδεμένος -->
+                <!-- ANONYMOUS USER: Show login button -->
+                <!-- Only visible when user is NOT logged in -->
                 <li class="nav-item"
                     th:if="${#authorization.expression('!isAuthenticated()')}">
                     <a class="btn btn-outline-light btn-sm" th:href="@{/login}">Login</a>
@@ -101,11 +140,17 @@
     </div>
 </nav>
 
+<!-- ======================= MAIN CONTENT AREA ======================= -->
+<!-- Container with vertical margin (my-4) for page content -->
 <div class="container my-4">
-    <!-- Page-specific περιεχόμενο -->
+    <!-- Page-specific content injection point -->
+    <!-- Child templates provide their content via the 'content' parameter -->
     <div th:replace="${content}"></div>
 </div>
 
+<!-- ======================= JAVASCRIPT ======================= -->
+<!-- Bootstrap 5 JS Bundle (includes Popper.js for dropdowns, tooltips, etc.) -->
+<!-- Loaded at end of body for better page load performance -->
 <script
         src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
 </script>
