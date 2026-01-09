@@ -1,46 +1,70 @@
 <!DOCTYPE html>
+<!-- Thymeleaf template for the login page -->
+<!-- xmlns:th enables Thymeleaf namespace for th:* attributes -->
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<!-- Include shared <head> from layout.html with custom page title -->
 <head th:replace="~{layout :: head('Login - StudyRooms')}"></head>
 
+<!-- Replace body with layout template, injecting the 'content' fragment below -->
+<!-- First param ('') is for active nav item, second param is the page content -->
 <body th:replace="~{layout :: body('', ~{::content})}">
+
+<!-- Main content fragment that gets injected into the layout -->
 <div th:fragment="content">
 
+    <!-- Bootstrap grid: centered column, responsive width (6 cols on md, 4 cols on lg) -->
     <div class="row justify-content-center my-5">
         <div class="col-md-6 col-lg-4">
 
             <h2 class="mb-4 text-center">Login</h2>
 
-            <!-- Μήνυμα λάθους (π.χ. Spring Security ?error) -->
+            <!-- Error alert: displayed when URL contains ?error parameter -->
+            <!-- Spring Security redirects here with ?error on failed authentication -->
             <div th:if="${param.error}" class="alert alert-danger">
                 Invalid username or password.
             </div>
 
-            <!-- Μήνυμα επιτυχούς logout (π.χ. ?logout) -->
+            <!-- Success alert: displayed when URL contains ?logout parameter -->
+            <!-- Spring Security redirects here with ?logout after successful logout -->
             <div th:if="${param.logout}" class="alert alert-success">
                 You have been logged out successfully.
             </div>
 
+            <!-- Login form card with Bootstrap shadow styling -->
             <div class="card shadow-sm">
                 <div class="card-body">
+
+                    <!-- Form posts to /login endpoint (Spring Security default) -->
+                    <!-- th:action generates context-aware URL -->
                     <form th:action="@{/login}" method="post">
 
+                        <!-- CSRF Token: Required by Spring Security to prevent -->
+                        <!-- Cross-Site Request Forgery attacks -->
+                        <!-- Only rendered if CSRF protection is enabled -->
                         <input type="hidden"
                                th:if="${_csrf != null}"
                                th:name="${_csrf.parameterName}"
                                th:value="${_csrf.token}"/>
 
+                        <!-- Username input field -->
+                        <!-- 'required' enforces client-side validation -->
+                        <!-- 'autofocus' focuses this field on page load -->
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
                             <input id="username" type="text" name="username"
                                    class="form-control" required autofocus>
                         </div>
 
+                        <!-- Password input field -->
+                        <!-- type="password" masks the input characters -->
                         <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
                             <input id="password" type="password" name="password"
                                    class="form-control" required>
                         </div>
 
+                        <!-- Submit button with Bootstrap grid styling for full-width -->
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary">
                                 Login
@@ -50,6 +74,8 @@
 
                     <hr>
 
+                    <!-- Registration link for new users -->
+                    <!-- th:href generates context-aware URL to /register -->
                     <p class="mb-0 text-center">
                         Don't have an account?
                         <a th:href="@{/register}">Register</a>

@@ -1,10 +1,22 @@
 <!DOCTYPE html>
+<!--
+    Space Details Page
+    ==================
+    Displays detailed information about a specific study space including:
+    - Space name, description, capacity, and operating hours
+    - Weather forecast widget (fetches data from external API)
+    - Date-based availability calendar with time slots
+-->
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!-- Include common head section from layout template with page title -->
 <head th:replace="~{layout :: head('Space Details - StudyRooms')}"></head>
 
+<!-- Replace body with layout template, 'spaces' = active nav item, ~{::content} = this page's content -->
 <body th:replace="~{layout :: body('spaces', ~{::content})}">
 <div th:fragment="content">
 
+    <!-- ==================== HEADER SECTION ==================== -->
+    <!-- Space title and navigation back button -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0" th:text="${space.name}">Space name</h2>
         <a th:href="@{/spaces}" class="btn btn-secondary btn-sm">
@@ -12,8 +24,11 @@
         </a>
     </div>
 
+    <!-- Space description from model -->
     <p th:text="${space.description}">Description</p>
 
+    <!-- ==================== SPACE DETAILS ==================== -->
+    <!-- Display capacity and operating hours -->
     <p class="mb-4">
         Capacity:
         <span th:text="${space.capacity}">10</span>
@@ -27,6 +42,14 @@
         </span>
     </p>
 
+    <!-- ==================== WEATHER WIDGET ==================== -->
+    <!--
+        Weather forecast card that fetches data from /api/weather endpoint.
+        Data attributes store configuration read from application.properties:
+        - data-lat/data-lon: Geographic coordinates for weather lookup
+        - data-location-label: Human-readable location name
+        - data-default-date/time: Initial values for the forecast query
+    -->
     <div class="card mb-4" id="weather-card"
          th:attr="data-lat=${@environment.getProperty('studyrooms.demo.latitude', '37.9838')},
                   data-lon=${@environment.getProperty('studyrooms.demo.longitude', '23.7275')},
@@ -35,16 +58,20 @@
                   data-default-time=${space.fullDay} ? '00:00' : ${space.openTime}"
     >
         <div class="card-body">
+            <!-- Weather card header with title and loading spinner -->
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <div>
                     <h5 class="card-title mb-1">Weather</h5>
+                    <!-- Display configured location label -->
                     <p class="text-muted mb-0 small"
                        th:text="'Using ' + (${@environment.getProperty('studyrooms.demo.location-label', 'demo coordinates')})">
                         Using demo coordinates
                     </p>
                 </div>
+                <!-- Loading spinner - hidden via JS when data loads -->
                 <div class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></div>
             </div>
+            <!-- Date/Time selection form for forecast queries (handled by JS, no server submit) -->
             <form class="row g-2 align-items-end mb-3" data-weather-form>
                 <div class="col-12 col-md-auto">
                     <label for="weather-date" class="form-label mb-0 small">Date</label>
@@ -52,6 +79,7 @@
                 </div>
                 <div class="col-12 col-md-auto">
                     <label for="weather-time" class="form-label mb-0 small">Time</label>
+                    <!-- step="1800" = 30-minute intervals -->
                     <input id="weather-time" type="time" step="1800" class="form-control form-control-sm" data-weather-time>
                 </div>
                 <div class="col-12 col-md-auto">
@@ -60,19 +88,23 @@
                     </button>
                 </div>
             </form>
+            <!-- Container for weather data populated by JavaScript -->
             <div class="small" data-weather-content>
                 Loading current weather...
             </div>
         </div>
     </div>
 
-    <!-- Date selector -->
+    <!-- ==================== DATE SELECTOR ==================== -->
+    <!-- Form to change the selected date and reload availability -->
     <div class="card mb-3">
         <div class="card-body">
+            <!-- GET request to same page with date query parameter -->
             <form th:action="@{|/spaces/${space.id}|}" method="get"
                   class="row g-2 align-items-end">
                 <div class="col-auto">
                     <label for="date" class="form-label mb-0">Select date</label>
+                    <!-- Pre-filled with currently selected date from model -->
                     <input id="date" type="date" name="date"
                            th:value="${selectedDate}"
                            class="form-control">
@@ -86,7 +118,8 @@
         </div>
     </div>
 
-    <!-- Daily availability table -->
+    <!-- ==================== AVAILABILITY TABLE ==================== -->
+    <!-- Shows all time slots for the selected date with booking status -->
     <h4 class="h5 mb-3">
         Availability for <span th:text="${selectedDate}">2025-01-01</span>
     </h4>
@@ -101,12 +134,15 @@
             </thead>
             <tbody>
 
+            <!-- Iterate over time slots from the model -->
             <tr th:each="slot : ${slots}">
+                <!-- Display slot start and end times -->
                 <td>
                     <span th:text="${slot.start}">09:00</span>
                     -
                     <span th:text="${slot.end}">09:30</span>
                 </td>
+                <!-- Status badge: red for booked, green for available -->
                 <td>
                     <span class="badge"
                           th:classappend="${slot.occupied} ? ' bg-danger' : ' bg-success'">
@@ -115,6 +151,7 @@
                 </td>
             </tr>
 
+            <!-- Empty state: shown when no slots exist for the date -->
             <tr th:if="${#lists.isEmpty(slots)}">
                 <td colspan="2" class="text-center text-muted">
                     No availability data for this date.
@@ -125,36 +162,60 @@
         </table>
     </div>
 
+    <!-- ==================== WEATHER WIDGET JAVASCRIPT ==================== -->
+    <!--
+        Client-side weather fetching script.
+        Uses IIFE (Immediately Invoked Function Expression) to avoid polluting global scope.
+        Fetches weather data from /api/weather endpoint based on coordinates and selected date/time.
+    -->
     <script>
         (() => {
+            // ===== DOM ELEMENT REFERENCES =====
             const card = document.getElementById('weather-card');
             if (!card) {
-                return;
+                return; // Exit if weather card doesn't exist on page
             }
 
-            const content = card.querySelector('[data-weather-content]');
-            const spinner = card.querySelector('.spinner-border');
-            const form = card.querySelector('[data-weather-form]');
-            const dateInput = card.querySelector('[data-weather-date]');
-            const timeInput = card.querySelector('[data-weather-time]');
+            // Query selectors for weather widget elements
+            const content = card.querySelector('[data-weather-content]');  // Weather data display area
+            const spinner = card.querySelector('.spinner-border');          // Loading indicator
+            const form = card.querySelector('[data-weather-form]');         // Date/time form
+            const dateInput = card.querySelector('[data-weather-date]');    // Date picker input
+            const timeInput = card.querySelector('[data-weather-time]');    // Time picker input
+
+            // ===== CONFIGURATION FROM DATA ATTRIBUTES =====
+            // Parse coordinates from data attributes (set by Thymeleaf from app properties)
             const lat = parseFloat(card.dataset.lat);
             const lon = parseFloat(card.dataset.lon);
             const locationLabel = card.dataset.locationLabel || 'demo coordinates';
-            const defaultDate = card.dataset.defaultDate;
-            const defaultTime = card.dataset.defaultTime;
+            const defaultDate = card.dataset.defaultDate;      // From selectedDate model attribute
+            const defaultTime = card.dataset.defaultTime;      // From space.openTime
 
+            // ===== HELPER FUNCTIONS =====
+
+            /**
+             * Hides the loading spinner
+             */
             const stopSpinner = () => {
                 if (spinner) {
                     spinner.classList.add('d-none');
                 }
             };
 
+            /**
+             * Displays a text message in the weather content area
+             * @param {string} message - The message to display
+             */
             const renderMessage = (message) => {
                 if (content) {
                     content.textContent = message;
                 }
             };
 
+            /**
+             * Sets default values for date and time inputs if empty
+             * Uses defaultDate/defaultTime from data attributes, or current date/noon
+             */
             const ensureDefaults = () => {
                 const today = new Date();
                 if (dateInput && !dateInput.value) {
@@ -165,20 +226,32 @@
                 }
             };
 
+            // ===== VALIDATION =====
+            // Check for valid coordinates before proceeding
             if (Number.isNaN(lat) || Number.isNaN(lon)) {
                 stopSpinner();
                 renderMessage('Weather unavailable: missing or invalid coordinates.');
                 return;
             }
 
+            // ===== MAIN FETCH FUNCTION =====
+            /**
+             * Fetches weather data from the backend API
+             * @param {string} whenDate - Date in YYYY-MM-DD format
+             * @param {string} whenTime - Time in HH:MM format
+             */
             const fetchWeather = (whenDate, whenTime) => {
+                // Build query parameters for the API request
                 const params = new URLSearchParams({ lat, lon });
                 if (whenDate && whenTime) {
+                    // Combine date and time into ISO-like format for the 'at' parameter
                     params.append('at', `${whenDate}T${whenTime}`);
                 }
 
+                // Show loading spinner
                 spinner?.classList.add('d-inline-block');
 
+                // Make API request to weather endpoint
                 fetch(`/api/weather?${params.toString()}`)
                     .then(response => {
                         if (!response.ok) {
@@ -188,11 +261,14 @@
                     })
                     .then(data => {
                         stopSpinner();
+
+                        // Handle empty response
                         if (!data) {
                             renderMessage('Weather data is not available right now.');
                             return;
                         }
 
+                        // Build array of weather data parts to display
                         const parts = [];
                         if (typeof data.temperatureCelsius === 'number') {
                             parts.push(`Temperature: ${data.temperatureCelsius.toFixed(1)}°C`);
@@ -204,13 +280,16 @@
                             parts.push(`Precipitation: ${data.precipitation.toFixed(1)} mm`);
                         }
 
+                        // Handle case where no weather fields are present
                         if (parts.length === 0) {
                             renderMessage('Weather data is not available right now.');
                             return;
                         }
 
+                        // Format timestamp for display
                         const timestamp = data.timestamp ? new Date(data.timestamp).toLocaleString() : 'selected time';
 
+                        // Render weather data as HTML list
                         content.innerHTML = `
                         <div class="mb-1">Forecast near ${locationLabel} for ${timestamp}:</div>
                         <ul class="mb-0 ps-3">
@@ -219,33 +298,42 @@
                     `;
                     })
                     .catch(error => {
+                        // Handle network or API errors gracefully
                         console.warn('Weather fetch failed', error);
                         stopSpinner();
                         renderMessage('Weather service is unavailable right now.');
                     });
             };
 
+            // ===== INITIALIZATION =====
+            // Set default values in form inputs
             ensureDefaults();
 
+            // ===== EVENT LISTENERS =====
+            // Handle form submission (Update forecast button)
             if (form) {
                 form.addEventListener('submit', (event) => {
-                    event.preventDefault();
+                    event.preventDefault(); // Prevent page reload
                     if (Number.isNaN(lat) || Number.isNaN(lon)) {
                         renderMessage('Weather unavailable: missing or invalid coordinates.');
                         return;
                     }
+                    // Reset and show spinner, then fetch new data
                     stopSpinner();
                     spinner?.classList.remove('d-none');
                     fetchWeather(dateInput?.value, timeInput?.value);
                 });
             }
 
+            // Final validation before initial fetch
             if (Number.isNaN(lat) || Number.isNaN(lon)) {
                 stopSpinner();
                 renderMessage('Weather unavailable: missing or invalid coordinates.');
                 return;
             }
 
+            // ===== INITIAL LOAD =====
+            // Fetch weather data on page load with default values
             fetchWeather(dateInput?.value, timeInput?.value);
         })();
     </script>

@@ -1,16 +1,30 @@
 <!DOCTYPE html>
+<!-- Thymeleaf template for the Access Denied (403) error page -->
+<!-- Uses the Thymeleaf namespace for th:* attribute processing -->
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<!-- Replace <head> with the 'head' fragment from layout.html, passing page title as parameter -->
 <head th:replace="~{layout :: head('Access Denied - StudyRooms')}"></head>
 
+<!-- Replace <body> with the 'body' fragment from layout.html -->
+<!-- Parameters: '' (empty nav indicator), ~{::content} (injects the content fragment below) -->
 <body th:replace="~{layout :: body('', ~{::content})}">
+
+<!-- Define the 'content' fragment that will be inserted into the layout's body -->
 <div th:fragment="content">
 
+    <!-- Centered container with vertical margin -->
     <div class="text-center my-5">
+        <!-- Page heading -->
         <h1 class="display-6 mb-3">Access Denied</h1>
+        
+        <!-- Error message explaining the access restriction -->
         <p class="lead mb-4">
             You do not have permission to access this page.
         </p>
 
+        <!-- Navigation button to return to dashboard -->
+        <!-- th:href="@{/dashboard}" generates a context-relative URL -->
         <a th:href="@{/dashboard}" class="btn btn-primary">
             Back to Dashboard
         </a>

@@ -2,58 +2,58 @@ version: "3.9"
 
 services:
   db:
-    image: postgres:16
+    image: postgres:16  # Use PostgreSQL version 16
     environment:
-      POSTGRES_USER: studyrooms
-      POSTGRES_PASSWORD: studyrooms
-      POSTGRES_DB: studyrooms
+      POSTGRES_USER: studyrooms      # Database username
+      POSTGRES_PASSWORD: studyrooms  # Database password
+      POSTGRES_DB: studyrooms        # Database name
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data  # Persist database data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]  # Check if DB is ready
       interval: 10s
       timeout: 5s
       retries: 5
     ports:
-      - "5432:5432"
+      - "5432:5432"  # Expose PostgreSQL port
 
   app:
-    build: .
+    build: .  # Build the main app from the current directory
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: studyrooms
-      DB_USERNAME: studyrooms
-      DB_PASSWORD: studyrooms
+      SPRING_PROFILES_ACTIVE: docker  # Use 'docker' Spring profile
+      DB_HOST: db                    # Database host (service name)
+      DB_PORT: 5432                  # Database port
+      DB_NAME: studyrooms            # Database name
+      DB_USERNAME: studyrooms        # Database username
+      DB_PASSWORD: studyrooms        # Database password
     ports:
-      - "8080:8080"
+      - "8080:8080"  # Expose app on port 8080
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_healthy  # Wait for DB to be healthy
 
   nginx:
-    image: nginx:stable
+    image: nginx:stable  # Use stable Nginx image
     depends_on:
       app:
-        condition: service_started
+        condition: service_started  # Wait for app to start
     ports:
-      - "80:80"
+      - "80:80"  # Expose Nginx on port 80
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # Mount custom Nginx config
 
   consumer:
     build:
-      context: ./consumer-service
+      context: ./consumer-service  # Build consumer from subdirectory
     environment:
-      STUDYROOMS_CONSUMER_ENABLED: "true"
-      STUDYROOMS_CONSUMER_BASE_URL: http://app:8080
-      STUDYROOMS_CONSUMER_USERNAME: student
-      STUDYROOMS_CONSUMER_PASSWORD: student123
+      STUDYROOMS_CONSUMER_ENABLED: "true"  # Enable consumer
+      STUDYROOMS_CONSUMER_BASE_URL: http://app:8080  # App base URL
+      STUDYROOMS_CONSUMER_USERNAME: student          # Consumer username
+      STUDYROOMS_CONSUMER_PASSWORD: student123       # Consumer password
     depends_on:
       app:
-        condition: service_started
-    profiles: ["with-consumer"]
+        condition: service_started  # Wait for app to start
+    profiles: ["with-consumer"]     # Only run with 'with-consumer' profile
 
 volumes:
-  db-data:
+  db-data:  # Named volume for PostgreSQL data

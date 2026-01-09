@@ -13,17 +13,43 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 
+/**
+ * REST controller for weather-related API endpoints.
+ * Provides endpoints to fetch current weather and weather forecasts
+ * for specified geographic coordinates using the Open-Meteo weather service.
+ * 
+ * Base URL: /api/weather
+ */
 @RestController
 @RequestMapping("/api/weather")
 @Tag(name = "Weather", description = "Weather lookup via Open-Meteo")
 public class WeatherApiController {
 
+    // Service dependency for handling weather data retrieval logic
     private final WeatherService weatherService;
 
+    /**
+     * Constructor that initializes the controller with the WeatherService dependency.
+     * Uses constructor injection for better testability and dependency management.
+     * 
+     * @param weatherService the service responsible for fetching weather data
+     */
     public WeatherApiController(WeatherService weatherService) {
         this.weatherService = weatherService;
     }
 
+    /**
+     * Retrieves the current weather for the specified geographic coordinates.
+     * 
+     * HTTP Method: GET
+     * Endpoint: GET /api/weather?lat={latitude}&lon={longitude}
+     * 
+     * @param latitude the latitude coordinate (required parameter)
+     * @param longitude the longitude coordinate (required parameter)
+     * @return ResponseEntity containing WeatherDto with current weather data
+     * 
+     * Example: GET /api/weather?lat=37.9838&lon=23.7275
+     */
     @Operation(summary = "Get current weather for coordinates")
     @GetMapping
     public ResponseEntity<WeatherDto> getCurrentWeather(@RequestParam("lat") double latitude,
@@ -31,6 +57,21 @@ public class WeatherApiController {
         return ResponseEntity.ok(weatherService.getCurrentWeather(latitude, longitude));
     }
 
+    /**
+     * Retrieves forecasted weather for the specified coordinates at a specific point in time.
+     * This endpoint requires all three parameters: latitude, longitude, and a timestamp.
+     * 
+     * HTTP Method: GET
+     * Endpoint: GET /api/weather?lat={latitude}&lon={longitude}&at={datetime}
+     * 
+     * @param latitude the latitude coordinate (required parameter)
+     * @param longitude the longitude coordinate (required parameter)
+     * @param at the specific date and time for the weather forecast in ISO 8601 format
+     *           (required parameter, format: YYYY-MM-DDTHH:mm:ss)
+     * @return ResponseEntity containing WeatherDto with forecasted weather data for the specified time
+     * 
+     * Example: GET /api/weather?lat=37.9838&lon=23.7275&at=2025-01-09T14:30:00
+     */
     @Operation(summary = "Get forecasted weather for coordinates at a specific time")
     @GetMapping(params = {"lat", "lon", "at"})
     public ResponseEntity<WeatherDto> getWeatherAt(

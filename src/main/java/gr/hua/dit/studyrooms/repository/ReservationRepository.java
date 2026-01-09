@@ -13,29 +13,38 @@ import java.time.LocalTime;
 import java.util.Collection;
 import java.util.List;
 
+
+// Repository interface for Reservation entity, providing custom query methods for reservation management
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
-    // "My reservations"
+    // Find all reservations for a specific user ("My reservations").
     List<Reservation> findByUser(User user);
 
-    // κρατήσεις για έναν χώρο σε συγκεκριμένη μέρα
+    // Find all reservations for a specific study space on a given date.
     List<Reservation> findByStudySpaceAndDate(StudySpace studySpace, LocalDate date);
 
+    // Find all reservations for a study space between two dates (inclusive).
     List<Reservation> findByStudySpaceAndDateBetween(StudySpace studySpace, LocalDate startDate, LocalDate endDate);
 
-    // Όλες οι κρατήσεις μιας ημέρας (π.χ. για staff view)
+    // Find all reservations for a specific date (e.g., for staff view).
     List<Reservation> findByDate(LocalDate date);
 
+
+    // Find reservations for a study space on a date with specific statuses.
     List<Reservation> findByStudySpaceAndDateAndStatusIn(
             StudySpace studySpace,
             LocalDate date,
             List<ReservationStatus> statuses
     );
 
-    // πόσες κρατήσεις υπάρχουν σήμερα συνολικά
+    // Count total reservations for a specific date.
     long countByDate(LocalDate date);
 
-    // πόσες επερχόμενες κρατήσεις έχει ένας χρήστης συνολικά
+    /**
+     * Count upcoming reservations for a user (future or today with start time >= now).
+     * Uses a JPQL query to count reservations where the date is after today,
+     * * or the date is today and the start time is in the future.
+     */
     @Query("""
         SELECT COUNT(r) FROM Reservation r
         WHERE r.user.username = :username
@@ -50,17 +59,22 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             @Param("nowTime") LocalTime nowTime
     );
 
-    // Χρησιμοποιείται για τον κανόνα: μέχρι Χ ενεργές κρατήσεις ανά ημέρα
+    // Count active reservations for a user on a specific date with given statuses.
     long countByUserAndDateAndStatusIn(
             User user,
             LocalDate date,
             Collection<ReservationStatus> statuses
     );
 
+    // Check if a reservation exists for a study space, date, and status.
     boolean existsByStudySpaceAndDateAndStatus(StudySpace studySpace,
                                                LocalDate date,
                                                ReservationStatus status);
 
+    /**
+     * Count reservations that overlap with a given time range for a space, date, and statuses.
+     * Uses a JPQL query to check for time overlaps.
+     */
     @Query("""
     SELECT COUNT(r) FROM Reservation r
     WHERE r.studySpace = :space
@@ -77,10 +91,11 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             @Param("statuses") Collection<ReservationStatus> statuses
     );
 
+    // Count reservations for a study space, date, and a set of statuses.
     long countByStudySpaceAndDateAndStatusIn(StudySpace space,
                                              LocalDate date,
-                                             Collection<ReservationStatus> statuses);
-
+                                             Collection<ReservationStatus> statuses
+    );
+           
     void deleteByDemoTrue();
-
 }

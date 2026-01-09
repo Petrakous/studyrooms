@@ -1,34 +1,61 @@
 <!DOCTYPE html>
+<!-- Thymeleaf template for displaying the list of available study spaces -->
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<!-- Include the common head section from layout.html with custom page title -->
 <head th:replace="~{layout :: head('Study Spaces - StudyRooms')}"></head>
 
+<!-- 
+    Replace body with layout template, passing:
+    - 'spaces' as the active navigation item identifier
+    - The content fragment defined below as the page content
+-->
 <body th:replace="~{layout :: body('spaces', ~{::content})}">
+
+<!-- Main content fragment that will be inserted into the layout -->
 <div th:fragment="content">
 
     <div class="row">
         <div class="col-12">
             <h2 class="mb-3">Available Study Spaces</h2>
 
+            <!-- List container for all study spaces using Bootstrap styling -->
             <ul class="list-group mb-3">
+
+                <!-- 
+                    Iterate over the 'spaces' collection passed from the controller.
+                    Each space object is accessible via the variable 's'.
+                -->
                 <li class="list-group-item d-flex justify-content-between align-items-center"
                     th:each="s : ${spaces}">
+
+                    <!-- Left side: Space information -->
                     <div>
+                        <!-- 
+                            Space name as a clickable link to the detail page.
+                            th:href builds the URL dynamically: /spaces/{id}
+                            th:text replaces "Space name" with actual space name
+                        -->
                         <a th:href="@{|/spaces/${s.id}|}"
                            th:text="${s.name}"
                            class="fw-semibold">
                             Space name
                         </a>
+                        <!-- Display space capacity; "10" is fallback for static preview -->
                         <small class="text-muted d-block">
                             Capacity:
                             <span th:text="${s.capacity}">10</span>
                         </small>
                     </div>
 
+                    <!-- Right side: Action buttons -->
                     <div class="d-flex gap-2">
+                        <!-- Link to view full space details -->
                         <a class="btn btn-sm btn-outline-primary"
                            th:href="@{|/spaces/${s.id}|}">
                             Details
                         </a>
+                        <!-- Link to create a new reservation -->
                         <a class="btn btn-sm btn-primary"
                            th:href="@{/reservations/new}">
                             Reserve
@@ -36,12 +63,17 @@
                     </div>
                 </li>
 
+                <!-- 
+                    Empty state: Displayed only when the spaces list is empty.
+                    Uses Thymeleaf's #lists utility to check if collection is empty.
+                -->
                 <li class="list-group-item text-center text-muted"
                     th:if="${#lists.isEmpty(spaces)}">
                     No spaces available.
                 </li>
             </ul>
 
+            <!-- Navigation button to return to the dashboard -->
             <a th:href="@{/dashboard}" class="btn btn-secondary">
                 Back to Dashboard
             </a>

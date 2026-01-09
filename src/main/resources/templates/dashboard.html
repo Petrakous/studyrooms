@@ -1,14 +1,35 @@
 <!DOCTYPE html>
+<!--
+    Dashboard Template - StudyRooms Application
+    This Thymeleaf template displays the main user dashboard with navigation cards
+    for different features. Staff members see additional management options.
+-->
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+
+<!-- Include the common <head> section from layout.html with the page title -->
 <head th:replace="~{layout :: head('Dashboard - StudyRooms')}"></head>
 
+<!--
+    Replace body with the layout's body fragment.
+    Parameters:
+      - 'dashboard': identifies this page for navigation highlighting
+      - ~{::content}: passes the content fragment defined below to the layout
+-->
 <body th:replace="~{layout :: body('dashboard', ~{::content})}">
+
+<!-- Content fragment that will be injected into the layout's main content area -->
 <div th:fragment="content">
 
     <h1 class="mb-4">Welcome to your dashboard!</h1>
 
+    <!-- Responsive grid container for dashboard cards (Bootstrap grid system) -->
     <div class="row g-3">
-        <!-- Study Spaces -->
+
+        <!-- ============================================
+             USER CARDS - Visible to all authenticated users
+             ============================================ -->
+
+        <!-- Study Spaces Card: Browse available study rooms -->
         <div class="col-md-6 col-lg-4">
             <div class="card h-100">
                 <div class="card-body d-flex flex-column">
@@ -16,6 +37,7 @@
                     <p class="card-text flex-grow-1">
                         Browse the available study rooms in the system.
                     </p>
+                    <!-- th:href generates context-aware URLs -->
                     <a th:href="@{/spaces}" class="btn btn-primary mt-auto">
                         View Study Spaces
                     </a>
@@ -23,7 +45,7 @@
             </div>
         </div>
 
-        <!-- New Reservation -->
+        <!-- New Reservation Card: Create a new booking -->
         <div class="col-md-6 col-lg-4">
             <div class="card h-100">
                 <div class="card-body d-flex flex-column">
@@ -38,7 +60,7 @@
             </div>
         </div>
 
-        <!-- My Reservations -->
+        <!-- My Reservations Card: View and manage user's own reservations -->
         <div class="col-md-6 col-lg-4">
             <div class="card h-100">
                 <div class="card-body d-flex flex-column">
@@ -53,9 +75,19 @@
             </div>
         </div>
 
-        <!-- Staff: Manage Spaces -->
+        <!-- ============================================
+             STAFF CARDS - Visible only to users with STAFF role
+             Uses Spring Security's authorization expressions
+             ============================================ -->
+
+        <!--
+            Manage Spaces Card (Staff Only)
+            th:if with #authorization.expression checks if user has STAFF role
+            Note: Double single-quotes ('') are used to escape quotes in Thymeleaf
+        -->
         <div class="col-md-6 col-lg-4"
              th:if="${#authorization.expression('hasRole(''STAFF'')')}">
+            <!-- border-warning gives the card a yellow/orange border to distinguish staff features -->
             <div class="card h-100 border-warning">
                 <div class="card-body d-flex flex-column">
                     <h5 class="card-title">Manage Spaces (Staff)</h5>
@@ -69,7 +101,7 @@
             </div>
         </div>
 
-        <!-- Staff: All Reservations -->
+        <!-- All Reservations Card (Staff Only): View system-wide reservations -->
         <div class="col-md-6 col-lg-4"
              th:if="${#authorization.expression('hasRole(''STAFF'')')}">
             <div class="card h-100 border-warning">
@@ -85,7 +117,11 @@
             </div>
         </div>
 
-        <!-- Staff: Occupancy Statistics -->
+        <!--
+            Occupancy Statistics Card (Staff Only)
+            Uses sec:authorize attribute (Spring Security Thymeleaf dialect)
+            as an alternative to th:if with #authorization
+        -->
         <div sec:authorize="hasRole('STAFF')" class="col-md-4">
             <div class="p-4 border rounded-3 shadow-sm bg-light border-warning">
                 <h5 class="mb-2">Occupancy Statistics (Staff)</h5>
@@ -97,6 +133,15 @@
             </div>
         </div>
 
+        <!-- ============================================
+             PENALTY ALERT
+             Displayed when user has a reservation penalty
+             (e.g., for no-shows or late cancellations)
+             ============================================ -->
+        <!--
+            th:if="${penaltyUntil}" - Only renders if penaltyUntil model attribute exists
+            th:text displays the penalty end date passed from the controller
+        -->
         <div th:if="${penaltyUntil}" class="alert alert-danger mt-3">
             You are blocked from making new reservations until
             <strong th:text="${penaltyUntil}">2025-01-01</strong>.
