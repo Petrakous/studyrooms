@@ -97,5 +97,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
                                              Collection<ReservationStatus> statuses
     );
            
+    void deleteByStudySpaceId(Long studySpaceId);
+
     void deleteByDemoTrue();
 }
