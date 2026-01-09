@@ -68,6 +68,13 @@
                     </div>
                 </div>
 
+                <div class="form-check mb-3">
+                    <input id="fullDay" class="form-check-input" type="checkbox" th:field="*{fullDay}">
+                    <label class="form-check-label" for="fullDay">
+                        Full day (open 24 hours)
+                    </label>
+                </div>
+
                 <!-- Buttons -->
                 <div class="d-flex justify-content-between mt-3">
                     <a th:href="@{/staff/spaces}" class="btn btn-secondary">Cancel</a>

@@ -36,6 +36,9 @@ public class StudySpaceDto {
     @Schema(description = "Closing time", example = "20:00:00")
     private LocalTime closeTime;
 
+    @Schema(description = "Marks the space as open all day")
+    private boolean fullDay;
+
     public Long getId() {
         return id;
     }
@@ -82,5 +85,13 @@ public class StudySpaceDto {
 
     public void setCloseTime(LocalTime closeTime) {
         this.closeTime = closeTime;
+    }
+
+    public boolean isFullDay() {
+        return fullDay;
+    }
+
+    public void setFullDay(boolean fullDay) {
+        this.fullDay = fullDay;
     }
 }

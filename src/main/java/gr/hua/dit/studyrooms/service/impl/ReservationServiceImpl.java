@@ -193,6 +193,9 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     private void checkOpeningHours(StudySpace space, LocalTime startTime, LocalTime endTime) {
+        if (space.isFullDay()) {
+            return;
+        }
         if (startTime.isBefore(space.getOpenTime()) || endTime.isAfter(space.getCloseTime())) {
             throw new IllegalStateException("Reservation time outside study space opening hours");
         }
