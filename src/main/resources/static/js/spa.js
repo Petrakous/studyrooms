@@ -29,6 +29,7 @@ const reservationsList = document.getElementById('reservations-list');   // Cont
 const reservationsError = document.getElementById('reservations-error'); // Reservations loading error container
 const spaceSelect = document.getElementById('space-select');       // Dropdown for selecting a space
 const logoutButton = document.getElementById('logout');            // Logout button
+const staffCard = document.getElementById('staff-card');           // Staff-only card container
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -78,10 +79,56 @@ function resetUiForLogout() {
     spaceSelect.innerHTML = '<option value="" disabled selected>Select a space</option>';
     reservationStatus.textContent = 'Waiting';
     reservationStatus.className = 'pill pill-muted';
+    if (staffCard) {
+        staffCard.classList.add('hidden');
+    }
     showError(loginError, '');
     showError(spacesError, '');
     showError(reservationError, '');
     showError(reservationsError, '');
+}
+
+/**
+ * Toggles staff-only UI elements.
+ * @param {boolean} isStaff - Whether the current user has staff access
+ */
+function setStaffVisibility(isStaff) {
+    if (!staffCard) return;
+    staffCard.classList.toggle('hidden', !isStaff);
+}
+
+/**
+ * Checks whether the current token grants access to staff endpoints.
+ * Uses a lightweight staff-only API request to detect role.
+ */
+async function checkStaffAccess() {
+    if (!token) {
+        setStaffVisibility(false);
+        return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+        const response = await fetch(`/api/staff/reservations?date=${today}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            setStaffVisibility(true);
+            return;
+        }
+
+        if (response.status === 401) {
+            setToken(null);
+            resetUiForLogout();
+        }
+
+        setStaffVisibility(false);
+    } catch {
+        setStaffVisibility(false);
+    }
 }
 
 /**
@@ -199,7 +246,7 @@ async function handleLogin(event) {
         setToken(data.token);
         
         // Load spaces and reservations in parallel after successful login
-        await Promise.all([loadSpaces(), loadReservations()]);
+        await Promise.all([loadSpaces(), loadReservations(), checkStaffAccess()]);
     } catch (e) {
         // On failure, clear any partial auth state and show error
         setToken(null);
@@ -432,5 +479,5 @@ updateTokenStatus(!!token);
 // If a token exists (e.g., from a previous session), auto-load data
 // On failure (e.g., expired token), automatically log out
 if (token) {
-    Promise.all([loadSpaces(), loadReservations()]).catch(() => handleLogout());
+    Promise.all([loadSpaces(), loadReservations(), checkStaffAccess()]).catch(() => handleLogout());
 }
