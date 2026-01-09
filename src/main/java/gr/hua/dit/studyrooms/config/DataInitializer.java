@@ -12,6 +12,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -72,6 +73,7 @@ public class DataInitializer implements CommandLineRunner {
      * @param args command-line arguments (unused)
      */
     @Override
+    @Transactional
     public void run(String... args) {
 
         // ========== SECTION 1: Initialize Default Users ==========
