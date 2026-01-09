@@ -69,6 +69,20 @@
     </section>
 
     <!-- =====================================================
+         STAFF TOOLS (STAFF ONLY)
+         Shows quick links for staff users after role check.
+         ===================================================== -->
+    <section class="card hidden" id="staff-card">
+        <h2>Staff tools</h2>
+        <p class="muted">Staff-only shortcuts for managing spaces and reservations.</p>
+        <div class="staff-actions">
+            <a class="button-link" href="/staff/spaces">Manage Spaces</a>
+            <a class="button-link" href="/staff/reservations">All Reservations</a>
+            <a class="button-link" href="/staff/occupancy">View Occupancy</a>
+        </div>
+    </section>
+
+    <!-- =====================================================
          SECTION 3: CREATE RESERVATION FORM
          Allows users to book a study space for a specific
          date and time range. Sends POST request with JWT.
