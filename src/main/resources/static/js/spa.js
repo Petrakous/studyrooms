@@ -190,6 +190,49 @@ async function checkStaffAccess() {
 }
 
 /**
+ * Toggles staff-only UI elements.
+ * @param {boolean} isStaff - Whether the current user has staff access
+ */
+function setStaffVisibility(isStaff) {
+    if (!staffCard) return;
+    staffCard.classList.toggle('hidden', !isStaff);
+}
+
+/**
+ * Checks whether the current token grants access to staff endpoints.
+ * Uses a lightweight staff-only API request to detect role.
+ */
+async function checkStaffAccess() {
+    if (!token) {
+        setStaffVisibility(false);
+        return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+        const response = await fetch(`/api/staff/reservations?date=${today}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            setStaffVisibility(true);
+            return;
+        }
+
+        if (response.status === 401) {
+            setToken(null);
+            resetUiForLogout();
+        }
+
+        setStaffVisibility(false);
+    } catch {
+        setStaffVisibility(false);
+    }
+}
+
+/**
  * Formats an API error response into a user-friendly message.
  * Handles various error response formats from the backend.
  * @param {Object} payload - Parsed JSON error response body
