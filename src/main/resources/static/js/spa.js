@@ -29,6 +29,7 @@ const reservationsList = document.getElementById('reservations-list');   // Cont
 const reservationsError = document.getElementById('reservations-error'); // Reservations loading error container
 const spaceSelect = document.getElementById('space-select');       // Dropdown for selecting a space
 const logoutButton = document.getElementById('logout');            // Logout button
+const staffCard = document.getElementById('staff-card') || document.getElementById('staff-spaces-card');
 const staffSpacesCard = document.getElementById('staff-spaces-card');
 const staffReservationsCard = document.getElementById('staff-reservations-card');
 const staffOccupancyCard = document.getElementById('staff-occupancy-card');
@@ -62,7 +63,8 @@ const reloadStaffSpacesButton = document.getElementById('reload-staff-spaces');
 const reloadStaffReservationsButton = document.getElementById('reload-staff-reservations');
 const reloadStaffOccupancyButton = document.getElementById('reload-staff-occupancy');
 
-const staffSections = [staffSpacesCard, staffReservationsCard, staffOccupancyCard];
+const staffSections = [staffCard, staffSpacesCard, staffReservationsCard, staffOccupancyCard].filter(Boolean);
+
 
 let cachedSpaces = [];
 
@@ -186,49 +188,6 @@ async function checkStaffAccess() {
     } catch {
         setStaffVisibility(false);
         return false;
-    }
-}
-
-/**
- * Toggles staff-only UI elements.
- * @param {boolean} isStaff - Whether the current user has staff access
- */
-function setStaffVisibility(isStaff) {
-    if (!staffCard) return;
-    staffCard.classList.toggle('hidden', !isStaff);
-}
-
-/**
- * Checks whether the current token grants access to staff endpoints.
- * Uses a lightweight staff-only API request to detect role.
- */
-async function checkStaffAccess() {
-    if (!token) {
-        setStaffVisibility(false);
-        return;
-    }
-
-    const today = new Date().toISOString().slice(0, 10);
-    try {
-        const response = await fetch(`/api/staff/reservations?date=${today}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (response.ok) {
-            setStaffVisibility(true);
-            return;
-        }
-
-        if (response.status === 401) {
-            setToken(null);
-            resetUiForLogout();
-        }
-
-        setStaffVisibility(false);
-    } catch {
-        setStaffVisibility(false);
     }
 }
 
