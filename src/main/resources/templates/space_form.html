@@ -140,6 +140,29 @@
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const fullDayCheckbox = document.getElementById('fullDay');
+            const openTimeInput = document.getElementById('openTime');
+            const closeTimeInput = document.getElementById('closeTime');
+
+            const toggleTimeInputs = () => {
+                const isFullDay = fullDayCheckbox.checked;
+                openTimeInput.disabled = isFullDay;
+                closeTimeInput.disabled = isFullDay;
+                openTimeInput.required = !isFullDay;
+                closeTimeInput.required = !isFullDay;
+                if (isFullDay) {
+                    openTimeInput.value = '';
+                    closeTimeInput.value = '';
+                }
+            };
+
+            fullDayCheckbox.addEventListener('change', toggleTimeInputs);
+            toggleTimeInputs();
+        });
+    </script>
+
 </div>
 </body>
 </html>

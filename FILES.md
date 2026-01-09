@@ -137,9 +137,9 @@ Categories: backend (Java), frontend (Thymeleaf + SPA), consumer service, docs, 
   - `manage_spaces.html`, `space_form.html`, `staff_reservations.html`, `staff_occupancy.html` for staff management and stats.
   - `access-denied.html` for forbidden responses.
 - **static/js/reservation-form.js** — Client-side helpers for reservation form validation and dynamic slot fetching.
-- **static/js/spa.js** — Lightweight SPA script: handles login to REST API, stores JWT in memory, calls `/api/spaces`, `/api/reservations`, renders results, and shows error states.
-- **static/css/spa.css** — Styling for SPA UI panels, forms, and cards.
-- **static/spa/index.html** — SPA entrypoint served as a static file; links `spa.js`/`spa.css` and renders token-aware controls.
+- **static/js/spa.js** — SPA script: handles login to REST API, stores JWT in memory, calls `/api/spaces` and `/api/reservations`, renders results and error states, and exposes staff-only sections for space management, staff reservations, and occupancy stats when authorized.
+- **static/css/spa.css** — Styling for SPA UI panels, forms, cards, and staff-only sections.
+- **static/spa/index.html** — SPA entrypoint served as a static file; links `spa.js`/`spa.css`, renders token-aware controls, and includes staff-only sections for space management, staff reservations, and occupancy stats.
 
 ### Tests
 - **src/test/java/gr/hua/dit/studyrooms/StudyRoomsApplicationTests.java** — Context load sanity test for the main app.
