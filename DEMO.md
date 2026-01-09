@@ -32,6 +32,7 @@ docker compose up --build
 4. **SPA**
    - Visit http://localhost/spa/ and login as a student.
    - List spaces, create or cancel a reservation, and verify errors are displayed from the API.
+   - Log in as staff to manage spaces, review all reservations, and load occupancy stats inside the SPA.
 5. **Optional consumer service**
    - Enable with `docker compose --profile with-consumer up --build` to see the consumer call the API using JWT.
 

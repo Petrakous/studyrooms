@@ -131,7 +131,8 @@ A minimalist single-page client that:
 2. Calls `/api/spaces` to list rooms and populate dropdowns.
 3. Posts to `/api/reservations` to create reservations and `/api/reservations/{id}` (DELETE) to cancel.
 4. Fetches `/api/reservations/my` to render current bookings.
-It demonstrates token handling, API error surfacing, and is intentionally limited to student flows.
+5. When a staff token is detected, surfaces staff tools for managing spaces, viewing all reservations, and loading occupancy stats.
+It demonstrates token handling, API error surfacing, and supports both student and staff flows.
 
 ## REST API
 - **Philosophy**: JSON-first, stateless, JWT-secured for mutating operations; OpenAPI annotations for discoverability. DTO validation guards inputs.
@@ -195,7 +196,7 @@ It demonstrates token handling, API error surfacing, and is intentionally limite
 1. **Student flow (MVC)**: Login as `student`, browse spaces, create a reservation respecting time and capacity, then view/cancel it in “My Reservations”. Errors surface if rules are violated (e.g., overlapping, exceeding daily limit, outside hours).
 2. **Staff flow (MVC)**: Login as `staff`, open the staff reservations page for a date, cancel or mark no-shows, or close a space for the day to bulk-cancel bookings. Observe status changes and penalty application to no-shows.
 3. **API demo**: Use Swagger UI to POST to `/api/auth/login`, then call `/api/spaces` and `/api/reservations` with the bearer token. Experiment with validation errors (past date, capacity exceeded) to see consistent messages.
-4. **SPA demo**: Visit `/spa/`, authenticate as a student, list spaces, create a booking, and cancel it—all via the REST API.
+4. **SPA demo**: Visit `/spa/`, authenticate as a student to book/cancel reservations. Log in as staff to manage spaces, view all reservations, and fetch occupancy stats—each powered by the REST API.
 5. **Consumer demo**: Start the consumer profile; inspect logs to see it obtaining a JWT and fetching spaces/reservations from the API without human interaction.
 
 ## Testing & Validation
