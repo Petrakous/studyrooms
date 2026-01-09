@@ -89,7 +89,10 @@
     <div th:if="${selectedSpace != null}">
         
         <!-- Display selected space name and date range as header -->
-        <h5 class="mb-3" th:text="${selectedSpace.name} + ' (' + startDate + ' to ' + endDate + ')'">Room</h5>
+        <h5 class="mb-3"
+            th:text="${selectedSpace.name} + ' (' + #temporals.format(startDate, 'yyyy-MM-dd') + ' to ' + #temporals.format(endDate, 'yyyy-MM-dd') + ')'">
+            Room
+        </h5>
 
         <!-- Responsive table wrapper for mobile compatibility -->
         <div class="table-responsive">

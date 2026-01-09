@@ -32,6 +32,11 @@ body {
     color: var(--text);
 }
 
+/* Generic hidden utility */
+.hidden {
+    display: none;
+}
+
 /* --------------------------------------------------------------------------
    Layout Container
    Centered content wrapper with max-width constraint
