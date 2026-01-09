@@ -28,13 +28,11 @@ import java.util.List;
  */
 public class ReservationServiceImpl implements ReservationService {
 
-
         // Maximum 3 active reservations per day per student
         private static final int MAX_RESERVATIONS_PER_DAY = 3;
 
         // Statuses considered "active" for reservation counting and capacity
         private static final List<ReservationStatus> ACTIVE_RESERVATION_STATUSES = List.of(
-            ReservationStatus.PENDING,
             ReservationStatus.CONFIRMED
         );
 
@@ -329,6 +327,7 @@ public class ReservationServiceImpl implements ReservationService {
         reservation.setEndTime(endTime);
         // All business rules executed above; persist confirmed reservation.
         reservation.setStatus(ReservationStatus.CONFIRMED);
+        reservation.setDemo(false);
 
         return reservationRepository.save(reservation);
     }

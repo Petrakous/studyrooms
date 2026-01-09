@@ -312,6 +312,7 @@ function renderReservations(reservations) {
         
         // Disable cancel button for already-cancelled reservations
         const normalizedStatus = (res.status || '').toUpperCase();
+        // Allow cancellation while the reservation is still active (e.g. CONFIRMED)
         cancelBtn.disabled = normalizedStatus === 'CANCELLED' || normalizedStatus === 'CANCELLED_BY_STAFF';
         
         item.appendChild(meta);

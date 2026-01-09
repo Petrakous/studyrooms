@@ -82,10 +82,9 @@
                 <td>
                     <span class="badge"
                           th:classappend="${r.status} == 'CONFIRMED' ? ' bg-success' :
-                                          (${r.status} == 'PENDING' ? ' bg-warning text-dark' :
                                            (${r.status} == 'CANCELLED' ? ' bg-secondary' :
                                             (${r.status} == 'CANCELLED_BY_STAFF' ? ' bg-danger' :
-                                            (${r.status} == 'NO_SHOW' ? ' bg-dark' : ' bg-light text-dark'))))"
+                                            (${r.status} == 'NO_SHOW' ? ' bg-dark' : ' bg-light text-dark')))"
                           th:text="${r.status}">
                         CONFIRMED
                     </span>

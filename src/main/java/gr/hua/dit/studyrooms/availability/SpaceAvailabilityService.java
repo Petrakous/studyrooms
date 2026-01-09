@@ -51,6 +51,7 @@ public class SpaceAvailabilityService {
 
         List<TimeSlotAvailability> list = new ArrayList<>();
 
+        // ---- 1. LOAD opening hours ----
         // Extract opening and closing times from the space configuration
         LocalTime open = space.isFullDay() ? LocalTime.MIDNIGHT : space.getOpenTime();
         LocalTime close = space.isFullDay() ? LocalTime.of(23, 59) : space.getCloseTime();
@@ -80,7 +81,6 @@ public class SpaceAvailabilityService {
         // Define which reservation statuses should count toward occupancy.
         // Only PENDING and CONFIRMED reservations block availability; CANCELLED or COMPLETED do not.
         List<ReservationStatus> active = List.of(
-                ReservationStatus.PENDING,
                 ReservationStatus.CONFIRMED
         );
 

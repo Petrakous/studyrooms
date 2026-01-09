@@ -55,6 +55,9 @@ public class StudySpace {
     @Column(nullable = false)
     private boolean fullDay;
 
+    @Column(nullable = false)
+    private boolean fullDay;
+
     @OneToMany(mappedBy = "studySpace")
     @JsonIgnore
     private List<Reservation> reservations;

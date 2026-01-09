@@ -23,7 +23,6 @@ public class ReservationStatisticsServiceImpl implements ReservationStatisticsSe
 
     // Only consider reservations with these statuses as "active" for statistics
     private static final EnumSet<ReservationStatus> ACTIVE_STATUSES = EnumSet.of(
-            ReservationStatus.PENDING,
             ReservationStatus.CONFIRMED
     );
 

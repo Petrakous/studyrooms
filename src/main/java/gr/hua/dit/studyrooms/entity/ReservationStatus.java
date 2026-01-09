@@ -8,11 +8,6 @@ package gr.hua.dit.studyrooms.entity;
  */
 public enum ReservationStatus {
     /**
-     * The reservation has been created and is waiting for confirmation.
-     */
-    PENDING,
-
-    /**
      * The reservation has been confirmed and is active.
      */
     CONFIRMED,

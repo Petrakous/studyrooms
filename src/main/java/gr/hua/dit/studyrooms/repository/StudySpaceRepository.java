@@ -31,7 +31,6 @@ public interface StudySpaceRepository extends JpaRepository<StudySpace, Long> {
             """)
     long countOpenNow(@Param("now") LocalTime now);
 
-
     /**
      * Finds a StudySpace entity by its name.
      * @param name The name of the StudySpace

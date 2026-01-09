@@ -161,10 +161,11 @@ public class DataInitializer implements CommandLineRunner {
         User student2 = userRepository.findByUsername("student2").orElse(null);
         List<StudySpace> spaces = studySpaceRepository.findAll();
 
+        reservationRepository.deleteByDemoTrue();
+        
         // Safety check: only populate reservations if they don't already exist.
         // This prevents duplication on repeated application startups.
-        // (Για να μην γεμίζουμε διπλές, μόνο όταν η DB είναι άδεια από reservations)
-        if (student != null && !spaces.isEmpty() && reservationRepository.count() == 0) {
+        if (student != null && !spaces.isEmpty()) {
 
             // Assign convenient references to the study spaces
             StudySpace roomA = spaces.get(0);
@@ -182,6 +183,7 @@ public class DataInitializer implements CommandLineRunner {
             r1.setStartTime(LocalTime.of(10, 0));
             r1.setEndTime(LocalTime.of(12, 0));
             r1.setStatus(ReservationStatus.CONFIRMED);
+            r1.setDemo(true);
             reservationRepository.save(r1);
 
             // r2: Pending future reservation - awaiting approval
@@ -191,7 +193,8 @@ public class DataInitializer implements CommandLineRunner {
             r2.setDate(LocalDate.now().plusDays(2));
             r2.setStartTime(LocalTime.of(14, 0));
             r2.setEndTime(LocalTime.of(15, 0));
-            r2.setStatus(ReservationStatus.PENDING);
+            r2.setStatus(ReservationStatus.CONFIRMED);
+            r2.setDemo(true);
             reservationRepository.save(r2);
 
             // r3: Cancelled by staff in the past - administrative cancellation example
@@ -202,6 +205,7 @@ public class DataInitializer implements CommandLineRunner {
             r3.setStartTime(LocalTime.of(18, 0));
             r3.setEndTime(LocalTime.of(20, 0));
             r3.setStatus(ReservationStatus.CANCELLED_BY_STAFF);
+            r3.setDemo(true);
             reservationRepository.save(r3);
 
             // r4: Cancelled by user in the past - user-initiated cancellation
@@ -212,6 +216,7 @@ public class DataInitializer implements CommandLineRunner {
             r4.setStartTime(LocalTime.of(9, 0));
             r4.setEndTime(LocalTime.of(11, 0));
             r4.setStatus(ReservationStatus.CANCELLED);
+            r4.setDemo(true);
             reservationRepository.save(r4);
 
             // r5: No-show in the past - user failed to appear at reservation time
@@ -224,6 +229,7 @@ public class DataInitializer implements CommandLineRunner {
                 r5.setStartTime(LocalTime.of(12, 0));
                 r5.setEndTime(LocalTime.of(14, 0));
                 r5.setStatus(ReservationStatus.NO_SHOW);
+                r5.setDemo(true);
                 reservationRepository.save(r5);
             }
 
@@ -236,6 +242,7 @@ public class DataInitializer implements CommandLineRunner {
             r6.setStartTime(LocalTime.of(16, 0));
             r6.setEndTime(LocalTime.of(18, 0));
             r6.setStatus(ReservationStatus.CONFIRMED);
+            r6.setDemo(true);
             reservationRepository.save(r6);
 
             // --- Random demo data: generates varied test data on each fresh database ---
@@ -283,10 +290,10 @@ public class DataInitializer implements CommandLineRunner {
                 int roll = random.nextInt(5);
                 switch (roll) {
                     case 0 -> status = ReservationStatus.CONFIRMED;
-                    case 1 -> status = ReservationStatus.PENDING;
-                    case 2 -> status = ReservationStatus.CANCELLED;
-                    case 3 -> status = ReservationStatus.CANCELLED_BY_STAFF;
-                    default -> status = ReservationStatus.NO_SHOW;
+                    case 1 -> status = ReservationStatus.CANCELLED;
+                    case 2 -> status = ReservationStatus.CANCELLED_BY_STAFF;
+                    case 3 -> status = ReservationStatus.NO_SHOW;
+                    default -> status = ReservationStatus.CONFIRMED;
                 }
 
                 // Create and save the random reservation
@@ -297,6 +304,7 @@ public class DataInitializer implements CommandLineRunner {
                 demo.setStartTime(start);
                 demo.setEndTime(end);
                 demo.setStatus(status);
+                demo.setDemo(true);
 
                 reservationRepository.save(demo);
             }
