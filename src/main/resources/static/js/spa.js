@@ -29,6 +29,42 @@ const reservationsList = document.getElementById('reservations-list');   // Cont
 const reservationsError = document.getElementById('reservations-error'); // Reservations loading error container
 const spaceSelect = document.getElementById('space-select');       // Dropdown for selecting a space
 const logoutButton = document.getElementById('logout');            // Logout button
+const staffSpacesCard = document.getElementById('staff-spaces-card');
+const staffReservationsCard = document.getElementById('staff-reservations-card');
+const staffOccupancyCard = document.getElementById('staff-occupancy-card');
+
+const staffSpaceForm = document.getElementById('staff-space-form');
+const staffSpaceIdInput = document.getElementById('staff-space-id');
+const staffSpaceNameInput = document.getElementById('staff-space-name');
+const staffSpaceDescriptionInput = document.getElementById('staff-space-description');
+const staffSpaceCapacityInput = document.getElementById('staff-space-capacity');
+const staffSpaceOpenInput = document.getElementById('staff-space-open');
+const staffSpaceCloseInput = document.getElementById('staff-space-close');
+const staffSpaceFullDayInput = document.getElementById('staff-space-fullday');
+const staffSpaceStatus = document.getElementById('staff-space-status');
+const staffSpacesList = document.getElementById('staff-spaces-list');
+const staffSpacesError = document.getElementById('staff-spaces-error');
+
+const staffReservationsForm = document.getElementById('staff-reservations-form');
+const staffReservationsDateInput = document.getElementById('staff-reservations-date');
+const staffReservationsList = document.getElementById('staff-reservations-list');
+const staffReservationsError = document.getElementById('staff-reservations-error');
+
+const staffOccupancyForm = document.getElementById('staff-occupancy-form');
+const staffOccupancySpaceSelect = document.getElementById('staff-occupancy-space');
+const staffOccupancyStartInput = document.getElementById('staff-occupancy-start');
+const staffOccupancyEndInput = document.getElementById('staff-occupancy-end');
+const staffOccupancySummary = document.getElementById('staff-occupancy-summary');
+const staffOccupancyList = document.getElementById('staff-occupancy-list');
+const staffOccupancyError = document.getElementById('staff-occupancy-error');
+
+const reloadStaffSpacesButton = document.getElementById('reload-staff-spaces');
+const reloadStaffReservationsButton = document.getElementById('reload-staff-reservations');
+const reloadStaffOccupancyButton = document.getElementById('reload-staff-occupancy');
+
+const staffSections = [staffSpacesCard, staffReservationsCard, staffOccupancyCard];
+
+let cachedSpaces = [];
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -78,10 +114,79 @@ function resetUiForLogout() {
     spaceSelect.innerHTML = '<option value="" disabled selected>Select a space</option>';
     reservationStatus.textContent = 'Waiting';
     reservationStatus.className = 'pill pill-muted';
+    staffSections.forEach(section => section?.classList.add('hidden'));
+    staffSpacesList.textContent = 'Sign in as staff to manage spaces.';
+    staffReservationsList.textContent = 'Sign in as staff to view reservations.';
+    staffOccupancyList.textContent = 'Sign in as staff to view occupancy.';
+    staffOccupancySummary.classList.add('hidden');
+    staffOccupancySummary.textContent = '';
+    staffOccupancySpaceSelect.innerHTML = '<option value="" disabled selected>Select a space</option>';
+    if (staffSpaceForm) {
+        staffSpaceForm.reset();
+        staffSpaceIdInput.value = '';
+        staffSpaceStatus.textContent = 'Waiting';
+        staffSpaceStatus.className = 'pill pill-muted';
+    }
+    if (staffReservationsForm) {
+        staffReservationsForm.reset();
+    }
+    if (staffOccupancyForm) {
+        staffOccupancyForm.reset();
+    }
     showError(loginError, '');
     showError(spacesError, '');
     showError(reservationError, '');
     showError(reservationsError, '');
+    showError(staffSpacesError, '');
+    showError(staffReservationsError, '');
+    showError(staffOccupancyError, '');
+}
+
+/**
+ * Toggles staff-only UI elements.
+ * @param {boolean} isStaff - Whether the current user has staff access
+ */
+function setStaffVisibility(isStaff) {
+    staffSections.forEach(section => {
+        if (!section) return;
+        section.classList.toggle('hidden', !isStaff);
+    });
+}
+
+/**
+ * Checks whether the current token grants access to staff endpoints.
+ * Uses a lightweight staff-only API request to detect role.
+ */
+async function checkStaffAccess() {
+    if (!token) {
+        setStaffVisibility(false);
+        return false;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+        const response = await fetch(`/api/staff/reservations?date=${today}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            setStaffVisibility(true);
+            return true;
+        }
+
+        if (response.status === 401) {
+            setToken(null);
+            resetUiForLogout();
+        }
+
+        setStaffVisibility(false);
+        return false;
+    } catch {
+        setStaffVisibility(false);
+        return false;
+    }
 }
 
 /**
@@ -199,7 +304,10 @@ async function handleLogin(event) {
         setToken(data.token);
         
         // Load spaces and reservations in parallel after successful login
-        await Promise.all([loadSpaces(), loadReservations()]);
+        const [_, __, isStaff] = await Promise.all([loadSpaces(), loadReservations(), checkStaffAccess()]);
+        if (isStaff) {
+            await Promise.all([loadStaffSpaces(), loadStaffReservations()]);
+        }
     } catch (e) {
         // On failure, clear any partial auth state and show error
         setToken(null);
@@ -218,6 +326,7 @@ async function handleLogin(event) {
  * @param {Array} spaces - Array of space objects from the API
  */
 function renderSpaces(spaces) {
+    cachedSpaces = Array.isArray(spaces) ? spaces : [];
     // Reset the space selection dropdown
     spaceSelect.innerHTML = '<option value="" disabled selected>Select a space</option>';
     
@@ -253,6 +362,22 @@ function renderSpaces(spaces) {
     // Replace the spaces list content with the new fragment
     spacesList.innerHTML = '';
     spacesList.appendChild(fragment);
+
+    updateStaffSpaceOptions();
+    if (!staffSpacesCard.classList.contains('hidden')) {
+        renderStaffSpaces(cachedSpaces);
+    }
+}
+
+function updateStaffSpaceOptions() {
+    if (!staffOccupancySpaceSelect) return;
+    staffOccupancySpaceSelect.innerHTML = '<option value="" disabled selected>Select a space</option>';
+    cachedSpaces.forEach(space => {
+        const option = document.createElement('option');
+        option.value = space.id;
+        option.textContent = `${space.name} (cap. ${space.capacity})`;
+        staffOccupancySpaceSelect.appendChild(option);
+    });
 }
 
 /**
@@ -268,6 +393,273 @@ async function loadSpaces() {
         showError(spacesError, e.message);
         spacesList.innerHTML = 'Sign in first.';
         spaceSelect.innerHTML = '<option value="" disabled selected>Select a space</option>';
+    }
+}
+
+// ============================================================================
+// STAFF - MANAGE SPACES
+// ============================================================================
+
+function formatSpaceHours(space) {
+    if (space.fullDay) {
+        return 'Open 24 hours';
+    }
+    return `${space.openTime || '--:--'} to ${space.closeTime || '--:--'}`;
+}
+
+function resetStaffSpaceForm() {
+    staffSpaceForm.reset();
+    staffSpaceIdInput.value = '';
+    staffSpaceStatus.textContent = 'Waiting';
+    staffSpaceStatus.className = 'pill pill-muted';
+    updateStaffFullDayInputs();
+}
+
+function updateStaffFullDayInputs() {
+    const isFullDay = staffSpaceFullDayInput.checked;
+    staffSpaceOpenInput.disabled = isFullDay;
+    staffSpaceCloseInput.disabled = isFullDay;
+    staffSpaceOpenInput.required = !isFullDay;
+    staffSpaceCloseInput.required = !isFullDay;
+    if (isFullDay) {
+        staffSpaceOpenInput.value = '';
+        staffSpaceCloseInput.value = '';
+    }
+}
+
+function renderStaffSpaces(spaces) {
+    if (!spaces.length) {
+        staffSpacesList.innerHTML = '<p class="empty">No spaces found.</p>';
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    spaces.forEach(space => {
+        const item = document.createElement('div');
+        item.className = 'list-item';
+
+        const meta = document.createElement('div');
+        meta.innerHTML = `
+            <strong>${space.name}</strong><br>
+            <span class="muted">Capacity: ${space.capacity} — ${formatSpaceHours(space)}</span>
+        `;
+
+        const actions = document.createElement('div');
+
+        const editButton = document.createElement('button');
+        editButton.type = 'button';
+        editButton.textContent = 'Edit';
+        editButton.onclick = () => {
+            staffSpaceIdInput.value = space.id;
+            staffSpaceNameInput.value = space.name;
+            staffSpaceDescriptionInput.value = space.description || '';
+            staffSpaceCapacityInput.value = space.capacity;
+            staffSpaceFullDayInput.checked = !!space.fullDay;
+            staffSpaceOpenInput.value = (space.openTime || '').slice(0, 5);
+            staffSpaceCloseInput.value = (space.closeTime || '').slice(0, 5);
+            staffSpaceStatus.textContent = 'Editing';
+            staffSpaceStatus.className = 'pill pill-muted';
+            updateStaffFullDayInputs();
+        };
+
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.textContent = 'Delete';
+        deleteButton.onclick = async () => {
+            if (!confirm(`Delete "${space.name}"?`)) return;
+            try {
+                await apiFetch(`/api/spaces/${space.id}`, { method: 'DELETE' });
+                await loadSpaces();
+                showError(staffSpacesError, '');
+            } catch (e) {
+                showError(staffSpacesError, e.message);
+            }
+        };
+
+        actions.appendChild(editButton);
+        actions.appendChild(deleteButton);
+
+        item.appendChild(meta);
+        item.appendChild(actions);
+        fragment.appendChild(item);
+    });
+
+    staffSpacesList.innerHTML = '';
+    staffSpacesList.appendChild(fragment);
+}
+
+async function loadStaffSpaces() {
+    showError(staffSpacesError, '');
+    try {
+        const spaces = await apiFetch('/api/spaces');
+        cachedSpaces = spaces;
+        renderStaffSpaces(spaces);
+        updateStaffSpaceOptions();
+    } catch (e) {
+        showError(staffSpacesError, e.message);
+        staffSpacesList.textContent = 'Sign in as staff to manage spaces.';
+    }
+}
+
+async function handleStaffSpaceSubmit(event) {
+    event.preventDefault();
+    showError(staffSpacesError, '');
+
+    const payload = {
+        name: staffSpaceNameInput.value.trim(),
+        description: staffSpaceDescriptionInput.value.trim() || null,
+        capacity: parseInt(staffSpaceCapacityInput.value, 10),
+        fullDay: staffSpaceFullDayInput.checked
+    };
+
+    if (!payload.fullDay) {
+        payload.openTime = staffSpaceOpenInput.value;
+        payload.closeTime = staffSpaceCloseInput.value;
+    }
+
+    const spaceId = staffSpaceIdInput.value;
+    staffSpaceStatus.textContent = spaceId ? 'Updating...' : 'Creating...';
+    staffSpaceStatus.className = 'pill pill-muted';
+
+    try {
+        if (spaceId) {
+            await apiFetch(`/api/spaces/${spaceId}`, {
+                method: 'PUT',
+                body: JSON.stringify(payload)
+            });
+        } else {
+            await apiFetch('/api/spaces', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+        }
+        staffSpaceStatus.textContent = 'Saved';
+        staffSpaceStatus.className = 'pill pill-success';
+        resetStaffSpaceForm();
+        await loadSpaces();
+    } catch (e) {
+        staffSpaceStatus.textContent = 'Failed';
+        staffSpaceStatus.className = 'pill pill-danger';
+        showError(staffSpacesError, e.message);
+    }
+}
+
+// ============================================================================
+// STAFF - ALL RESERVATIONS
+// ============================================================================
+
+function renderStaffReservations(reservations) {
+    if (!reservations.length) {
+        staffReservationsList.innerHTML = '<p class="empty">No reservations found.</p>';
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    reservations.forEach(res => {
+        const item = document.createElement('div');
+        item.className = 'list-item';
+
+        const meta = document.createElement('div');
+        meta.className = 'reservation-meta';
+        meta.innerHTML = `
+            <strong>${res.studySpace?.name || 'Space #' + res.studySpace?.id}</strong>
+            <span class="muted">${res.date} — ${res.startTime} to ${res.endTime}</span>
+            <span class="tag">${res.status || 'ACTIVE'}</span>
+        `;
+
+        const cancelButton = document.createElement('button');
+        cancelButton.type = 'button';
+        cancelButton.textContent = 'Cancel';
+        cancelButton.disabled = ['CANCELLED', 'CANCELLED_BY_STAFF'].includes((res.status || '').toUpperCase());
+        cancelButton.onclick = async () => {
+            if (!confirm('Cancel this reservation as staff?')) return;
+            try {
+                await apiFetch(`/api/staff/reservations/${res.id}/cancel`, { method: 'POST' });
+                await loadStaffReservations();
+            } catch (e) {
+                showError(staffReservationsError, e.message);
+            }
+        };
+
+        item.appendChild(meta);
+        item.appendChild(cancelButton);
+        fragment.appendChild(item);
+    });
+
+    staffReservationsList.innerHTML = '';
+    staffReservationsList.appendChild(fragment);
+}
+
+async function loadStaffReservations() {
+    showError(staffReservationsError, '');
+    const dateValue = staffReservationsDateInput.value;
+    const query = dateValue ? `?date=${dateValue}` : '';
+    try {
+        const reservations = await apiFetch(`/api/staff/reservations${query}`);
+        renderStaffReservations(reservations);
+    } catch (e) {
+        showError(staffReservationsError, e.message);
+        staffReservationsList.textContent = 'Sign in as staff to view reservations.';
+    }
+}
+
+function handleStaffReservationsFilter(event) {
+    event.preventDefault();
+    loadStaffReservations();
+}
+
+// ============================================================================
+// STAFF - OCCUPANCY
+// ============================================================================
+
+function renderStaffOccupancy(stats) {
+    if (!stats.length) {
+        staffOccupancyList.innerHTML = '<p class="empty">No data for the selected range.</p>';
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    stats.forEach(entry => {
+        const percent = Number(entry.occupancyPercentage ?? 0).toFixed(1);
+        const item = document.createElement('div');
+        item.className = 'list-item';
+        item.innerHTML = `
+            <div>
+                <strong>${entry.date}</strong><br>
+                <span class="muted">Reservations: ${entry.reservationsCount}</span>
+            </div>
+            <span class="tag">${percent}%</span>
+        `;
+        fragment.appendChild(item);
+    });
+
+    staffOccupancyList.innerHTML = '';
+    staffOccupancyList.appendChild(fragment);
+}
+
+async function loadStaffOccupancy(event) {
+    if (event) {
+        event.preventDefault();
+    }
+    showError(staffOccupancyError, '');
+
+    const spaceId = staffOccupancySpaceSelect.value;
+    const startDate = staffOccupancyStartInput.value;
+    const endDate = staffOccupancyEndInput.value;
+    if (!spaceId || !startDate || !endDate) {
+        showError(staffOccupancyError, 'Please select a space and date range.');
+        return;
+    }
+
+    try {
+        const stats = await apiFetch(`/api/stats/occupancy?spaceId=${spaceId}&startDate=${startDate}&endDate=${endDate}`);
+        const space = cachedSpaces.find(item => `${item.id}` === `${spaceId}`);
+        staffOccupancySummary.textContent = `${space?.name || 'Selected space'} (${startDate} to ${endDate})`;
+        staffOccupancySummary.classList.remove('hidden');
+        renderStaffOccupancy(stats);
+    } catch (e) {
+        showError(staffOccupancyError, e.message);
+        staffOccupancyList.textContent = 'Sign in as staff to view occupancy.';
     }
 }
 
@@ -425,12 +817,27 @@ document.getElementById('reload-spaces').addEventListener('click', loadSpaces);
 document.getElementById('reservation-form').addEventListener('submit', handleReservationSubmit);
 document.getElementById('reload-reservations').addEventListener('click', loadReservations);
 logoutButton.addEventListener('click', handleLogout);
+staffSpaceForm.addEventListener('submit', handleStaffSpaceSubmit);
+staffSpaceFullDayInput.addEventListener('change', updateStaffFullDayInputs);
+reloadStaffSpacesButton.addEventListener('click', loadStaffSpaces);
+staffReservationsForm.addEventListener('submit', handleStaffReservationsFilter);
+reloadStaffReservationsButton.addEventListener('click', loadStaffReservations);
+staffOccupancyForm.addEventListener('submit', loadStaffOccupancy);
+reloadStaffOccupancyButton.addEventListener('click', loadStaffOccupancy);
 
 // Initialize UI based on existing token state
 updateTokenStatus(!!token);
+updateStaffFullDayInputs();
 
 // If a token exists (e.g., from a previous session), auto-load data
 // On failure (e.g., expired token), automatically log out
 if (token) {
-    Promise.all([loadSpaces(), loadReservations()]).catch(() => handleLogout());
+    Promise.all([loadSpaces(), loadReservations(), checkStaffAccess()])
+        .then((results) => {
+            if (results[2]) {
+                return Promise.all([loadStaffSpaces(), loadStaffReservations()]);
+            }
+            return null;
+        })
+        .catch(() => handleLogout());
 }
