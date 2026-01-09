@@ -58,6 +58,9 @@ public class StudySpaceDto {
      */
     private LocalTime closeTime;
 
+    @Schema(description = "Marks the space as open all day")
+    private boolean fullDay;
+    
     /**
      * Gets the unique identifier of the study space.
      */
@@ -140,5 +143,13 @@ public class StudySpaceDto {
      */
     public void setCloseTime(LocalTime closeTime) {
         this.closeTime = closeTime;
+    }
+
+    public boolean isFullDay() {
+        return fullDay;
+    }
+
+    public void setFullDay(boolean fullDay) {
+        this.fullDay = fullDay;
     }
 }

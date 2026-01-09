@@ -51,10 +51,17 @@ public class StudySpace {
     @OneToMany(mappedBy = "studySpace") // One study space can have many reservations
     @JsonIgnore // Ignore in JSON serialization to prevent recursion
     private List<Reservation> reservations; // Reservations for this space
+    
+    @Column(nullable = false)
+    private boolean fullDay;
 
-
+    @OneToMany(mappedBy = "studySpace")
+    @JsonIgnore
+    private List<Reservation> reservations;
+  
     // All-args constructor
-    public StudySpace(Long id, List<Reservation> reservations, LocalTime closeTime, LocalTime openTime, Integer capacity, String description, String name) {
+    public StudySpace(Long id, List<Reservation> reservations, LocalTime closeTime, LocalTime openTime,
+                      Integer capacity, String description, String name, boolean fullDay) {
         this.id = id;
         this.reservations = reservations;
         this.closeTime = closeTime;
@@ -62,6 +69,7 @@ public class StudySpace {
         this.capacity = capacity;
         this.description = description;
         this.name = name;
+        this.fullDay = fullDay;
     }
 
 
@@ -100,6 +108,13 @@ public class StudySpace {
         this.closeTime = closeTime;
     }
 
+    public boolean isFullDay() {
+        return fullDay;
+    }
+
+    public void setFullDay(boolean fullDay) {
+        this.fullDay = fullDay;
+    }
 
     public LocalTime getOpenTime() {
         return openTime;

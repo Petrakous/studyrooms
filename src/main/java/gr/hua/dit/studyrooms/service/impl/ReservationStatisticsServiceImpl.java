@@ -55,9 +55,9 @@ public class ReservationStatisticsServiceImpl implements ReservationStatisticsSe
                 .filter(r -> ACTIVE_STATUSES.contains(r.getStatus()))
                 .collect(Collectors.groupingBy(Reservation::getDate));
 
-        // Calculate the total available minutes per day (open-close time)
-        long totalMinutes = Math.max(0, Duration.between(space.getOpenTime(), space.getCloseTime()).toMinutes());
-        // Multiply by capacity to get total available seat-minutes
+        long totalMinutes = space.isFullDay()
+                ? Duration.ofHours(23).plusMinutes(59).toMinutes()
+                : Math.max(0, Duration.between(space.getOpenTime(), space.getCloseTime()).toMinutes());
         long totalSeatMinutes = totalMinutes * Math.max(1, space.getCapacity());
 
         List<OccupancyStatsEntry> results = new ArrayList<>();

@@ -2,6 +2,8 @@ package gr.hua.dit.studyrooms.repository;
 
 import gr.hua.dit.studyrooms.entity.StudySpace;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,15 +22,14 @@ public interface StudySpaceRepository extends JpaRepository<StudySpace, Long> {
      */
     List<StudySpace> findAllByOrderByNameAsc();
 
-
-    /**
-     * Counts the number of StudySpace entities that are currently open.
-     * A space is considered open if openTime <= now < closeTime.
-     * @param openTime The current time to compare with openTime
-     * @param closeTime The current time to compare with closeTime
-     * @return Number of open StudySpace entities
-     */
-    long countByOpenTimeLessThanEqualAndCloseTimeGreaterThan(LocalTime openTime, LocalTime closeTime);
+    // Spaces open now (fullDay or openTime <= now < closeTime)
+    @Query("""
+            select count(s)
+            from StudySpace s
+            where s.fullDay = true
+               or (s.openTime <= :now and s.closeTime > :now)
+            """)
+    long countOpenNow(@Param("now") LocalTime now);
 
 
     /**

@@ -51,10 +51,9 @@ public class SpaceAvailabilityService {
 
         List<TimeSlotAvailability> list = new ArrayList<>();
 
-        // ---- 1. LOAD opening hours ----
         // Extract opening and closing times from the space configuration
-        LocalTime open = space.getOpenTime();
-        LocalTime close = space.getCloseTime();
+        LocalTime open = space.isFullDay() ? LocalTime.MIDNIGHT : space.getOpenTime();
+        LocalTime close = space.isFullDay() ? LocalTime.of(23, 59) : space.getCloseTime();
 
         // Combine the date with opening/closing times to create boundary timestamps for the day
         LocalDateTime dayStart = date.atTime(open);
@@ -65,7 +64,7 @@ public class SpaceAvailabilityService {
         // or intentional 24-hour operation flagged with identical times), treat as nearly full day.
         // This prevents the loop from never terminating when dayEnd <= dayStart.
         if (!dayEnd.isAfter(dayStart)) {
-            dayEnd = dayStart.plusHours(23).plusMinutes(59);  // treat as full-day open (23:59)
+            throw new IllegalStateException("Invalid opening hours for study space.");
         }
 
         // ---- 3. SAFETY: limit maximum loop time to 24h to avoid infinite loops ----

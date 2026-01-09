@@ -346,6 +346,7 @@ public class DataInitializer implements CommandLineRunner {
                     existing.setCapacity(capacity);
                     existing.setOpenTime(openTime);
                     existing.setCloseTime(closeTime);
+                    existing.setFullDay(false);
                     return studySpaceRepository.save(existing);
                 })
                 .orElseGet(() -> {
@@ -355,6 +356,7 @@ public class DataInitializer implements CommandLineRunner {
                     space.setCapacity(capacity);
                     space.setOpenTime(openTime);
                     space.setCloseTime(closeTime);
+                    space.setFullDay(false);
                     return studySpaceRepository.save(space);
                 });
     }

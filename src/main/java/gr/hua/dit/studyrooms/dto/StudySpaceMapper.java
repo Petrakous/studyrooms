@@ -36,6 +36,7 @@ public final class StudySpaceMapper {
         space.setCapacity(dto.getCapacity());
         space.setOpenTime(dto.getOpenTime());
         space.setCloseTime(dto.getCloseTime());
+        space.setFullDay(dto.isFullDay());
         return space;
     }
 
@@ -59,6 +60,7 @@ public final class StudySpaceMapper {
         dto.setCapacity(space.getCapacity());
         dto.setOpenTime(space.getOpenTime());
         dto.setCloseTime(space.getCloseTime());
+        dto.setFullDay(space.isFullDay());
         return dto;
     }
 }

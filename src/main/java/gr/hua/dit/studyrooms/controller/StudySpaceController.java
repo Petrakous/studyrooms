@@ -88,6 +88,7 @@ public class StudySpaceController {
     @PreAuthorize("hasAnyRole('STAFF')")
     public String createSpace(@Valid @ModelAttribute("space") StudySpaceDto space,
                               BindingResult bindingResult) {
+        validateOperatingHours(space, bindingResult);
         if (bindingResult.hasErrors()) {
             return "space_form";
         }
@@ -108,6 +109,7 @@ public class StudySpaceController {
     public String updateSpace(@PathVariable Long id,
                               @Valid @ModelAttribute("space") StudySpaceDto space,
                               BindingResult bindingResult) {
+        validateOperatingHours(space, bindingResult);
         if (bindingResult.hasErrors()) {
             return "space_form";
         }
@@ -121,6 +123,22 @@ public class StudySpaceController {
     public String deleteSpace(@PathVariable Long id) {
         studySpaceService.deleteSpace(id);
         return "redirect:/staff/spaces";
+    }
+
+    private void validateOperatingHours(StudySpaceDto space, BindingResult bindingResult) {
+        if (space == null) {
+            return;
+        }
+        if (!space.isFullDay()
+                && space.getOpenTime() != null
+                && space.getCloseTime() != null
+                && !space.getCloseTime().isAfter(space.getOpenTime())) {
+            bindingResult.rejectValue(
+                    "closeTime",
+                    "space.closeTime",
+                    "Close time must be after open time unless Full day is selected."
+            );
+        }
     }
 
 }

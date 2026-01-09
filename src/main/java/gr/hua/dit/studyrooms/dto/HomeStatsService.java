@@ -46,7 +46,7 @@ public class HomeStatsService {
 
         // 2) Count spaces that are currently open (openTime <= now < closeTime)
         long spacesOpenNow =
-                studySpaceRepository.countByOpenTimeLessThanEqualAndCloseTimeGreaterThan(now, now);
+                studySpaceRepository.countOpenNow(now);
 
         // 3) Count total reservations made today (all users)
         long totalToday =
