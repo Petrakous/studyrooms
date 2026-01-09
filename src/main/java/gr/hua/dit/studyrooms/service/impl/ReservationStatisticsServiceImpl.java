@@ -55,7 +55,7 @@ public class ReservationStatisticsServiceImpl implements ReservationStatisticsSe
                 .collect(Collectors.groupingBy(Reservation::getDate));
 
         long totalMinutes = space.isFullDay()
-                ? Duration.ofHours(23).plusMinutes(59).toMinutes()
+                ? Duration.ofHours(24).toMinutes()
                 : Math.max(0, Duration.between(space.getOpenTime(), space.getCloseTime()).toMinutes());
         long totalSeatMinutes = totalMinutes * Math.max(1, space.getCapacity());
 
@@ -67,7 +67,7 @@ public class ReservationStatisticsServiceImpl implements ReservationStatisticsSe
             List<Reservation> dayReservations = reservationsByDate.getOrDefault(cursor, List.of());
             // Sum the occupied minutes for all reservations on this day
             long occupiedMinutes = dayReservations.stream()
-                    .mapToLong(r -> Duration.between(r.getStartTime(), r.getEndTime()).toMinutes())
+                    .mapToLong(r -> Math.max(0, Duration.between(r.getStartTime(), r.getEndTime()).toMinutes()))
                     .sum();
 
             // Cap the occupied minutes at the total available seat-minutes

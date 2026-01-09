@@ -124,6 +124,15 @@ header h1 {
     gap: 12px;
 }
 
+.field.inline > div {
+    display: flex;
+    flex-direction: column;
+}
+
+.field.inline .actions {
+    align-self: end;
+}
+
 /* --------------------------------------------------------------------------
    Buttons
    Primary action buttons with hover animation effects
@@ -208,6 +217,10 @@ button:disabled {
     justify-content: space-between;
     align-items: center;
     gap: 10px;
+}
+
+.list-item button + button {
+    margin-left: 8px;
 }
 
 /* Remove border from last item */
