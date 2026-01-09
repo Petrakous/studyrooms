@@ -1,14 +1,36 @@
 <!DOCTYPE html>
+<!--
+    Home Page Template for StudyRooms Application
+    This Thymeleaf template displays the landing page with:
+    - A hero section with quick stats
+    - A "How it works" guide for new users
+-->
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<!-- Include shared head elements (meta tags, CSS, title) from layout.html -->
 <head th:replace="~{layout :: head('Home - StudyRooms')}"></head>
 
+<!--
+    Replace body with layout template structure.
+    First param: empty string (no active nav item highlighting)
+    Second param: the content fragment to inject into the layout
+-->
 <body th:replace="~{layout :: body('', ~{::content})}">
+
+<!-- Main content fragment that will be inserted into the layout -->
 <div th:fragment="content">
 
-    <!-- HERO SECTION -->
+    <!-- ============================================================
+         HERO SECTION
+         A prominent banner with gradient background containing:
+         - Welcome message and call-to-action buttons (left)
+         - Quick statistics card (right)
+         ============================================================ -->
     <section class="py-5 px-3 px-md-5 mb-4 rounded-4"
              style="background: linear-gradient(135deg, #0d6efd, #6610f2); color: #fff;">
         <div class="row align-items-center">
+
+            <!-- Left Column: Welcome message and navigation buttons -->
             <div class="col-lg-7 mb-4 mb-lg-0">
                 <h1 class="display-5 fw-bold mb-3">Welcome to StudyRooms</h1>
                 <p class="lead mb-4">
@@ -16,6 +38,7 @@
                     reservations and keep your study time organized.
                 </p>
 
+                <!-- Primary call-to-action buttons using Thymeleaf URL syntax (@{...}) -->
                 <div class="d-flex flex-wrap gap-2">
                     <a th:href="@{/dashboard}" class="btn btn-light btn-lg">
                         Go to Dashboard
@@ -29,20 +52,30 @@
                 </div>
             </div>
 
+            <!-- Right Column: Quick stats card showing today's overview -->
             <div class="col-lg-5">
                 <div class="bg-white text-dark rounded-4 shadow-sm p-3">
                     <h5 class="mb-3 text-center">Today at a glance</h5>
+
+                    <!--
+                        Statistics list: Each item displays a label and value.
+                        Uses Thymeleaf conditional expression to check if 'stats' object exists.
+                        If stats is null, displays an em-dash (—) as fallback.
+                    -->
                     <ul class="list-group list-group-flush small">
+                        <!-- Count of user's upcoming reservations -->
                         <li class="list-group-item d-flex justify-content-between">
                             <span>Upcoming reservations</span>
                             <span class="fw-semibold"
                                   th:text="${stats != null} ? ${stats.upcomingReservations} : '—'">—</span>
                         </li>
+                        <!-- Number of study spaces currently available for booking -->
                         <li class="list-group-item d-flex justify-content-between">
                             <span>Spaces available now</span>
                             <span class="fw-semibold"
                                   th:text="${stats != null} ? ${stats.spacesAvailableNow} : '—'">—</span>
                         </li>
+                        <!-- Total number of reservations made for today -->
                         <li class="list-group-item d-flex justify-content-between">
                             <span>Total reservations today</span>
                             <span class="fw-semibold"
@@ -54,11 +87,17 @@
         </div>
     </section>
 
-    <!-- HOW IT WORKS -->
+    <!-- ============================================================
+         HOW IT WORKS SECTION
+         A 3-step guide explaining the booking process to new users.
+         Each step is displayed as a Bootstrap card.
+         ============================================================ -->
     <section class="mb-4">
         <h2 class="h4 mb-3 text-center">How it works</h2>
 
         <div class="row g-3">
+
+            <!-- Step 1: Browse available study spaces -->
             <div class="col-md-4">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
@@ -73,6 +112,7 @@
                 </div>
             </div>
 
+            <!-- Step 2: Create a new reservation -->
             <div class="col-md-4">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
@@ -87,6 +127,7 @@
                 </div>
             </div>
 
+            <!-- Step 3: View and manage existing bookings -->
             <div class="col-md-4">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">

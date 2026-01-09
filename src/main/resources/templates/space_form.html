@@ -1,33 +1,72 @@
 <!DOCTYPE html>
+<!--
+    Space Form Template (space_form.html)
+    ======================================
+    Thymeleaf template for creating and editing study spaces.
+    Used by staff members to manage study room configurations.
+    
+    Model Attributes Expected:
+    - space: SpaceDTO object (with id, name, description, capacity, openTime, closeTime)
+    - error: Optional error message string for global form errors
+    - _csrf: CSRF token (auto-injected by Spring Security)
+-->
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<!-- 
+    Head Section: Dynamically sets page title based on create/edit mode.
+    Uses the 'head' fragment from layout.html template.
+-->
 <head th:replace="~{layout :: head( (space.id == null) ? 'Create Space - StudyRooms' : 'Edit Space - StudyRooms' ) }"></head>
 
+<!--
+    Body Section: Injects the 'content' fragment into the shared layout.
+    The layout provides consistent navigation, header, and footer.
+-->
 <body th:replace="~{layout :: body('', ~{::content})}">
 <div th:fragment="content">
 
+    <!-- 
+        Page Heading: Displays "Create Study Space" for new spaces (id is null)
+        or "Edit Study Space" when editing an existing space.
+    -->
     <h2 class="mb-4"
         th:text="${space.id == null} ? 'Create Study Space' : 'Edit Study Space'">
         Study Space Form
     </h2>
 
-    <!-- Global error -->
+    <!-- Global error alert: Displays server-side validation or processing errors -->
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
+    <!-- Main form card container with Bootstrap shadow styling -->
     <div class="card shadow-sm">
         <div class="card-body">
 
+            <!--
+                Study Space Form
+                - th:object binds to the 'space' model attribute for form backing
+                - Action URL: POST to /staff/spaces (create) or /staff/spaces/{id} (update)
+                - Method is always POST; update uses hidden _method field if needed
+            -->
             <form th:object="${space}"
                   method="post"
                   th:action="${space.id} == null ?
                              @{/staff/spaces} :
                              @{/staff/spaces/{id}(id=${space.id})}">
 
+                    <!-- 
+                        CSRF Token: Hidden field for Cross-Site Request Forgery protection.
+                        Spring Security requires this token for all state-changing requests.
+                    -->
                     <input type="hidden"
                            th:if="${_csrf != null}"
                            th:name="${_csrf.parameterName}"
                            th:value="${_csrf.token}"/>
 
-                <!-- Name -->
+                <!-- 
+                    Name Field: Required text input for the study space name.
+                    th:field binds to space.name for both value and name attributes.
+                    th:errors displays validation errors from @Valid annotation.
+                -->
                 <div class="mb-3">
                     <label for="name" class="form-label">Name</label>
                     <input id="name" th:field="*{name}"
@@ -35,7 +74,10 @@
                     <div class="text-danger small" th:errors="*{name}"></div>
                 </div>
 
-                <!-- Description -->
+                <!-- 
+                    Description Field: Optional textarea for space details.
+                    Allows staff to provide additional information about the room.
+                -->
                 <div class="mb-3">
                     <label for="description" class="form-label">Description</label>
                     <textarea id="description" th:field="*{description}"
@@ -43,7 +85,10 @@
                     <div class="text-danger small" th:errors="*{description}"></div>
                 </div>
 
-                <!-- Capacity -->
+                <!-- 
+                    Capacity Field: Required number input for maximum occupancy.
+                    min="1" ensures at least 1 person capacity (HTML5 validation).
+                -->
                 <div class="mb-3">
                     <label for="capacity" class="form-label">Capacity</label>
                     <input id="capacity" type="number" min="1"
@@ -51,8 +96,13 @@
                     <div class="text-danger small" th:errors="*{capacity}"></div>
                 </div>
 
-                <!-- Open + Close Times -->
+                <!-- 
+                    Operating Hours Section: Two-column layout for open/close times.
+                    Uses Bootstrap grid (row/col-md-6) for responsive design.
+                    Time inputs use HTML5 type="time" for native time picker support.
+                -->
                 <div class="row">
+                    <!-- Open Time: When the study space becomes available -->
                     <div class="col-md-6 mb-3">
                         <label for="openTime" class="form-label">Open Time (HH:MM)</label>
                         <input id="openTime" type="time" th:field="*{openTime}"
@@ -60,6 +110,7 @@
                         <div class="text-danger small" th:errors="*{openTime}"></div>
                     </div>
 
+                    <!-- Close Time: When the study space closes for the day -->
                     <div class="col-md-6 mb-3">
                         <label for="closeTime" class="form-label">Close Time (HH:MM)</label>
                         <input id="closeTime" type="time" th:field="*{closeTime}"
@@ -68,7 +119,11 @@
                     </div>
                 </div>
 
-                <!-- Buttons -->
+                <!-- 
+                    Form Action Buttons:
+                    - Cancel: Returns to staff spaces list without saving
+                    - Save: Submits form to create or update the space
+                -->
                 <div class="d-flex justify-content-between mt-3">
                     <a th:href="@{/staff/spaces}" class="btn btn-secondary">Cancel</a>
 

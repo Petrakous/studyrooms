@@ -17,19 +17,30 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Main Spring MVC Controller for managing study spaces.
+ * Handles requests for both students (viewing spaces) and staff (managing spaces).
+ * All staff operations are protected with role-based access control (@PreAuthorize).
+ */
 @Controller
 public class StudySpaceController {
 
+    // Services for business logic and availability management
     private final StudySpaceService studySpaceService;
     private final SpaceAvailabilityService spaceAvailabilityService;
 
+    /**
+     * Constructor for dependency injection of required services.
+     * @param studySpaceService Service for CRUD operations on study spaces
+     * @param spaceAvailabilityService Service for managing time slot availability
+     */
     public StudySpaceController(StudySpaceService studySpaceService,
                                 SpaceAvailabilityService spaceAvailabilityService) {
         this.studySpaceService = studySpaceService;
         this.spaceAvailabilityService = spaceAvailabilityService;
     }
 
-    // ---------- STUDENT VIEW ----------
+    // ========== STUDENT VIEW - PUBLIC ENDPOINTS ==========
 
     @GetMapping("/spaces")
     public String listSpaces(Model model) {

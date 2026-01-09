@@ -1,27 +1,47 @@
 <!DOCTYPE html>
+<!-- 
+    My Reservations Page Template
+    This Thymeleaf template displays all reservations for the currently logged-in user.
+    It allows users to view their reservation history and cancel active reservations.
+-->
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<!-- Include the common head section from layout.html with page-specific title -->
 <head th:replace="~{layout :: head('My Reservations - StudyRooms')}"></head>
 
+<!-- 
+    Replace body with layout template, passing:
+    - 'my-reservations': identifier for active nav highlighting
+    - ~{::content}: the content fragment defined below
+-->
 <body th:replace="~{layout :: body('my-reservations', ~{::content})}">
+
+<!-- Main content fragment that will be inserted into the layout -->
 <div th:fragment="content">
 
+    <!-- Page header with title and "New Reservation" button -->
     <div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="mb-0">My Reservations</h2>
+        <!-- Link to create a new reservation -->
         <a th:href="@{/reservations/new}" class="btn btn-primary">
             + New Reservation
         </a>
     </div>
 
+    <!-- Display error message if present in the model (e.g., cancellation failed) -->
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
+    <!-- Informational text about reservation rules/limits -->
     <p class="text-muted mb-4">
         Maximum duration per reservation: <strong>2 hours</strong>.
         Maximum number of active reservations per day: <strong>3</strong>.
         Consecutive reservations are <strong>allowed</strong> (e.g., 10:00–12:00 and 12:00–14:00).
     </p>
 
+    <!-- Responsive table wrapper for mobile compatibility -->
     <div class="table-responsive">
         <table class="table table-striped table-hover align-middle">
+            <!-- Table header row -->
             <thead class="table-light">
             <tr>
                 <th>Space</th>
@@ -32,14 +52,33 @@
             </tr>
             </thead>
             <tbody>
+            <!-- 
+                Iterate over each reservation in the 'reservations' list.
+                Variable 'r' represents the current Reservation entity.
+            -->
             <tr th:each="r : ${reservations}">
+                <!-- Display the study space name -->
                 <td th:text="${r.studySpace.name}">Room A</td>
+                
+                <!-- Display the reservation date -->
                 <td th:text="${r.date}">2025-01-01</td>
+                
+                <!-- Display the time range (start - end) -->
                 <td>
                     <span th:text="${r.startTime}">10:00</span>
                     -
                     <span th:text="${r.endTime}">12:00</span>
                 </td>
+                
+                <!-- 
+                    Status badge with dynamic Bootstrap color classes:
+                    - CONFIRMED: green (bg-success)
+                    - PENDING: yellow (bg-warning)
+                    - CANCELLED: gray (bg-secondary)
+                    - CANCELLED_BY_STAFF: red (bg-danger)
+                    - NO_SHOW: dark (bg-dark)
+                    - Other: light (bg-light)
+                -->
                 <td>
                     <span class="badge"
                           th:classappend="${r.status} == 'CONFIRMED' ? ' bg-success' :
@@ -51,17 +90,25 @@
                         CONFIRMED
                     </span>
                 </td>
+                
+                <!-- Actions column with cancel button -->
                 <td>
-                    <!-- ο φοιτητής δεν μπορεί να ακυρώσει αν είναι ήδη CANCELLED ή CANCELLED_BY_STAFF -->
+                    <!-- 
+                        Cancel form - only shown if reservation is NOT already cancelled.
+                        Uses SpEL T() operator to reference the ReservationStatus enum directly.
+                        Students cannot cancel reservations that are already CANCELLED or CANCELLED_BY_STAFF.
+                    -->
                     <form th:if="${r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED
           and r.status != T(gr.hua.dit.studyrooms.entity.ReservationStatus).CANCELLED_BY_STAFF}"
                           th:action="@{/reservations/{id}/cancel(id=${r.id})}"
                           method="post"
                           class="d-inline">
-                                <input type="hidden"
-                                       th:if="${_csrf != null}"
-                                       th:name="${_csrf.parameterName}"
-                                       th:value="${_csrf.token}"/>
+                        <!-- CSRF token for Spring Security protection against cross-site request forgery -->
+                        <input type="hidden"
+                               th:if="${_csrf != null}"
+                               th:name="${_csrf.parameterName}"
+                               th:value="${_csrf.token}"/>
+                        <!-- Cancel button with JavaScript confirmation dialog -->
                         <button type="submit" class="btn btn-sm btn-danger"
                                 onclick="return confirm('Cancel this reservation?');">
                             Cancel
@@ -70,6 +117,7 @@
                 </td>
             </tr>
 
+            <!-- Empty state message when user has no reservations -->
             <tr th:if="${#lists.isEmpty(reservations)}">
                 <td colspan="5" class="text-center text-muted">
                     You have no reservations yet.
@@ -79,11 +127,17 @@
         </table>
     </div>
 
+    <!-- 
+        Penalty alert - displayed when user is blocked from making reservations.
+        This happens after too many no-shows or rule violations.
+        Shows the date/time until which the user is blocked.
+    -->
     <div th:if="${penaltyUntil}" class="alert alert-danger">
         You are blocked from making new reservations until
         <span th:text="${penaltyUntil}"></span>.
     </div>
 
+    <!-- Navigation button to return to the main dashboard -->
     <a th:href="@{/dashboard}" class="btn btn-secondary mt-3">
         Back to Dashboard
     </a>
