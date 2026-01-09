@@ -15,6 +15,7 @@ import gr.hua.dit.studyrooms.availability.SpaceAvailabilityService;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 /**
@@ -128,6 +129,29 @@ public class StudySpaceController {
     private void validateOperatingHours(StudySpaceDto space, BindingResult bindingResult) {
         if (space == null) {
             return;
+        }
+        if (space.isFullDay()) {
+            if (space.getOpenTime() == null) {
+                space.setOpenTime(LocalTime.MIDNIGHT);
+            }
+            if (space.getCloseTime() == null) {
+                space.setCloseTime(LocalTime.of(23, 59));
+            }
+            return;
+        }
+        if (space.getOpenTime() == null) {
+            bindingResult.rejectValue(
+                    "openTime",
+                    "space.openTime",
+                    "Open time is required unless Full day is selected."
+            );
+        }
+        if (space.getCloseTime() == null) {
+            bindingResult.rejectValue(
+                    "closeTime",
+                    "space.closeTime",
+                    "Close time is required unless Full day is selected."
+            );
         }
         if (!space.isFullDay()
                 && space.getOpenTime() != null
