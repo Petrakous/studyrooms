@@ -1,52 +1,101 @@
 <!DOCTYPE html>
+<!--
+    Staff Occupancy Statistics Page
+    ================================
+    This Thymeleaf template displays occupancy statistics for study spaces.
+    Staff members can select a space and date range to view utilization metrics.
+    
+    Model Attributes Expected:
+    - spaces: List of all available study spaces (for dropdown)
+    - selectedSpace: The currently selected space object (or null)
+    - startDate: Start date of the selected range
+    - endDate: End date of the selected range
+    - stats: List of daily occupancy statistics for the selected space/range
+    - error: Optional error message to display
+-->
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<!-- Include shared head fragment with page title -->
 <head th:replace="~{layout :: head('Occupancy Statistics - StudyRooms')}">
     <title>Occupancy Statistics</title>
 </head>
+
+<!-- Include shared body layout; 'staff-occupancy' is used for nav highlighting -->
 <body th:replace="~{layout :: body('staff-occupancy', ~{::content})}">
+
+<!-- Main content fragment that gets inserted into the layout -->
 <div th:fragment="content">
 
+    <!-- ==================== PAGE HEADER ==================== -->
+    <!-- Title section with back navigation button -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h2 class="mb-0">Occupancy statistics</h2>
             <p class="text-muted mb-0">Choose a space and date range to review utilisation.</p>
         </div>
+        <!-- Navigation back to main staff reservations view -->
         <a th:href="@{/staff/reservations}" class="btn btn-outline-secondary">Back to staff view</a>
     </div>
 
+    <!-- ==================== ERROR DISPLAY ==================== -->
+    <!-- Show error message if one exists in the model -->
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
+    <!-- ==================== FILTER FORM ==================== -->
+    <!-- 
+        Form to select space and date range for occupancy statistics.
+        Submits via GET to preserve filter state in URL (bookmarkable).
+    -->
     <form class="row g-3 align-items-end mb-4" method="get" th:action="@{/staff/occupancy}">
+        
+        <!-- Study Space Dropdown -->
         <div class="col-md-4">
             <label for="spaceId" class="form-label">Study space</label>
             <select id="spaceId" name="spaceId" class="form-select" required>
+                <!-- Default placeholder option -->
                 <option value="" th:selected="${selectedSpace == null}">Select space</option>
+                <!-- Iterate over all spaces; mark currently selected one -->
                 <option th:each="s : ${spaces}" th:value="${s.id}" th:text="${s.name}"
                         th:selected="${selectedSpace != null and selectedSpace.id == s.id}"></option>
             </select>
         </div>
+        
+        <!-- Start Date Input -->
         <div class="col-md-3">
             <label for="startDate" class="form-label">Start date</label>
             <input id="startDate" type="date" name="startDate" class="form-control" th:value="${startDate}" required>
         </div>
+        
+        <!-- End Date Input -->
         <div class="col-md-3">
             <label for="endDate" class="form-label">End date</label>
             <input id="endDate" type="date" name="endDate" class="form-control" th:value="${endDate}" required>
         </div>
+        
+        <!-- Submit Button -->
         <div class="col-md-2">
             <button type="submit" class="btn btn-primary w-100">Load stats</button>
         </div>
     </form>
 
+    <!-- ==================== NO SPACE SELECTED STATE ==================== -->
+    <!-- Display informational message when no space has been selected yet -->
     <div th:if="${selectedSpace == null}">
         <div class="alert alert-info">Select a study space to view occupancy.</div>
     </div>
 
+    <!-- ==================== STATISTICS DISPLAY ==================== -->
+    <!-- Only shown when a space is selected -->
     <div th:if="${selectedSpace != null}">
+        
+        <!-- Display selected space name and date range as header -->
         <h5 class="mb-3" th:text="${selectedSpace.name} + ' (' + startDate + ' to ' + endDate + ')'">Room</h5>
 
+        <!-- Responsive table wrapper for mobile compatibility -->
         <div class="table-responsive">
             <table class="table table-striped align-middle">
+                
+                <!-- Table Header -->
                 <thead class="table-light">
                 <tr>
                     <th>Date</th>
@@ -56,17 +105,28 @@
                     <th class="text-end">Occupancy %</th>
                 </tr>
                 </thead>
+                
+                <!-- Table Body - Statistics Data -->
                 <tbody>
+                <!-- Iterate over each day's statistics -->
                 <tr th:each="stat : ${stats}">
                     <td th:text="${stat.date}">2025-01-01</td>
                     <td class="text-end" th:text="${stat.reservationsCount}">0</td>
                     <td class="text-end" th:text="${stat.occupiedMinutes}">0</td>
                     <td class="text-end" th:text="${stat.totalMinutes}">0</td>
                     <td class="text-end">
+                        <!-- 
+                            Color-coded occupancy badge:
+                            - Green (bg-success): 0-40% occupancy (low utilization)
+                            - Yellow (bg-warning): 40-70% occupancy (moderate utilization)
+                            - Red (bg-danger): >70% occupancy (high utilization)
+                        -->
                         <span class="badge" th:classappend="${stat.occupancyPercentage} > 70 ? ' bg-danger' : (${stat.occupancyPercentage} > 40 ? ' bg-warning text-dark' : ' bg-success')"
                               th:text="${#numbers.formatDecimal(stat.occupancyPercentage, 1, 1)} + '%'">0%</span>
                     </td>
                 </tr>
+                
+                <!-- Empty state - shown when no statistics are available for the range -->
                 <tr th:if="${stats == null or #lists.isEmpty(stats)}">
                     <td colspan="5" class="text-center text-muted">No data for the selected range.</td>
                 </tr>

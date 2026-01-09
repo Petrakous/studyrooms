@@ -1,6 +1,25 @@
+# ===========================================
+# Docker Build Context Ignore File
+# ===========================================
+# Files and directories listed here are excluded
+# from the Docker build context, reducing image
+# size and speeding up builds.
+# ===========================================
+
+# Maven build output directories (compiled classes, JARs, etc.)
+# These are rebuilt inside the container during the build process
 **/target
+
+# Maven wrapper JAR file (not needed; mvnw scripts handle downloading)
 **/.mvn/wrapper/maven-wrapper.jar
+
+# Git repository metadata and history (not needed in production image)
 .git
 .gitignore
+
+# Node.js dependencies (if using frontend build tools)
+# These should be installed fresh inside the container
 node_modules
+
+# macOS Finder metadata files (system-specific, not needed)
 .DS_Store

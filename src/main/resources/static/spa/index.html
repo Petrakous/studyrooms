@@ -1,63 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Character encoding and responsive viewport settings -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StudyRooms SPA</title>
+    <!-- Main stylesheet for the SPA UI -->
     <link rel="stylesheet" href="/css/spa.css">
 </head>
 <body>
+<!-- Main application container -->
 <div class="app">
+    <!-- Page header with title and description -->
     <header>
         <h1>StudyRooms SPA</h1>
         <p class="muted">Single-page client consuming the JWT-secured REST API.</p>
     </header>
 
+    <!-- =====================================================
+         SECTION 1: AUTHENTICATION
+         Handles user login and JWT token management.
+         The token is stored in memory for the session duration.
+         ===================================================== -->
     <section class="card" id="auth-card">
         <h2>1. Authenticate</h2>
+        <!-- Login form - submits credentials to obtain JWT token -->
         <form id="login-form">
+            <!-- Username input field -->
             <div class="field">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" required>
             </div>
+            <!-- Password input field (masked) -->
             <div class="field">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
             </div>
+            <!-- Action buttons and token status indicator -->
             <div class="actions">
                 <button type="submit">Sign in &amp; Get Token</button>
+                <!-- Status badge showing current token state -->
                 <span id="token-status" class="pill pill-muted">No token</span>
+                <!-- Logout button - clears the stored JWT token -->
                 <button id="logout" type="button" class="secondary">Logout</button>
             </div>
         </form>
         <p class="hint">The token is kept for this session. Use Logout or refresh the page to clear it.</p>
+        <!-- Error display area (hidden by default) -->
         <pre id="login-error" class="error hidden"></pre>
     </section>
 
+    <!-- =====================================================
+         SECTION 2: STUDY SPACES LIST
+         Displays all available study spaces fetched from the API.
+         Requires authentication (JWT token) to access.
+         ===================================================== -->
     <section class="card" id="spaces-card">
         <div class="card-header">
             <h2>2. Spaces</h2>
+            <!-- Manually refresh the spaces list -->
             <button id="reload-spaces" type="button">Reload</button>
         </div>
         <p class="muted">Lists all study spaces using <code>GET /api/spaces</code>.</p>
+        <!-- Container for dynamically loaded spaces -->
         <div id="spaces-list" class="list">Sign in first.</div>
+        <!-- Error display area (hidden by default) -->
         <pre id="spaces-error" class="error hidden"></pre>
     </section>
 
+    <!-- =====================================================
+         SECTION 3: CREATE RESERVATION FORM
+         Allows users to book a study space for a specific
+         date and time range. Sends POST request with JWT.
+         ===================================================== -->
     <section class="card" id="reservation-card">
         <h2>3. Create a reservation</h2>
         <p class="muted">Posts to <code>POST /api/reservations</code> using the Bearer token.</p>
         <form id="reservation-form">
+            <!-- Dropdown populated with available study spaces -->
             <div class="field">
                 <label for="space-select">Study space</label>
                 <select id="space-select" name="studySpaceId" required>
                     <option value="" disabled selected>Select a space</option>
+                    <!-- Options are dynamically populated by spa.js -->
                 </select>
             </div>
+            <!-- Date picker for reservation date -->
             <div class="field">
                 <label for="date">Date</label>
                 <input type="date" id="date" name="date" required>
             </div>
+            <!-- Time range inputs (start and end time) -->
             <div class="field inline">
                 <div>
                     <label for="start-time">Start</label>
@@ -68,24 +101,37 @@
                     <input type="time" id="end-time" name="endTime" required>
                 </div>
             </div>
+            <!-- Submit button and status indicator -->
             <div class="actions">
                 <button type="submit">Create</button>
+                <!-- Status badge showing reservation creation state -->
                 <span id="reservation-status" class="pill pill-muted">Waiting</span>
             </div>
         </form>
+        <!-- Error display area (hidden by default) -->
         <pre id="reservation-error" class="error hidden"></pre>
     </section>
 
+    <!-- =====================================================
+         SECTION 4: MY RESERVATIONS LIST
+         Shows all reservations belonging to the logged-in user.
+         Allows users to cancel their existing reservations.
+         ===================================================== -->
     <section class="card" id="my-reservations-card">
         <div class="card-header">
             <h2>4. My reservations</h2>
+            <!-- Manually refresh the user's reservations list -->
             <button id="reload-reservations" type="button">Reload</button>
         </div>
         <p class="muted">Uses <code>GET /api/reservations/my</code> and allows cancelling.</p>
+        <!-- Container for dynamically loaded reservations -->
         <div id="reservations-list" class="list">Sign in first.</div>
+        <!-- Error display area (hidden by default) -->
         <pre id="reservations-error" class="error hidden"></pre>
     </section>
 </div>
+
+<!-- Main JavaScript file handling all API interactions and UI updates -->
 <script src="/js/spa.js"></script>
 </body>
 </html>

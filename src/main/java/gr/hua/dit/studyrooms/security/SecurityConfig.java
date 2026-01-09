@@ -15,35 +15,53 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+
+// Main security configuration class for the application
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    }
+        // Custom JWT authentication filter for API requests
+        private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        // Inject the JWT authentication filter via constructor
+        public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+                this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        }
 
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
-    }
 
+        // Bean for encoding passwords using BCrypt
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
+
+
+        // Bean for authentication manager, used for authenticating users
+        @Bean
+        public AuthenticationManager authenticationManager(
+                        AuthenticationConfiguration configuration) throws Exception {
+                return configuration.getAuthenticationManager();
+        }
+
+
+    /**
+     * Security filter chain for API endpoints (stateless, JWT-based)
+     * Applies to all /api/** routes
+     */
     @Bean
     @Order(1)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
+                // Only apply this filter chain to /api/** endpoints
                 .securityMatcher("/api/**")
+                // Disable CSRF for APIs (stateless)
                 .csrf(AbstractHttpConfigurer::disable)
+                // Use stateless session management (no HTTP session)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Configure which API endpoints are public and which require authentication
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/login",
@@ -53,23 +71,32 @@ public class SecurityConfig {
                                 "/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
-                        ).permitAll()
-                        .anyRequest().authenticated()
+                        ).permitAll() // Allow unauthenticated access to these endpoints
+                        .anyRequest().authenticated() // All other API requests require authentication
                 )
+                // Disable form login and logout for APIs
                 .formLogin(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
+                // Add JWT authentication filter before the default username/password filter
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+
+    /**
+     * Security filter chain for MVC (web) endpoints
+     * Applies to all non-API routes (web pages, static resources, etc.)
+     */
     @Bean
     @Order(2)
     public SecurityFilterChain mvcSecurityFilterChain(HttpSecurity http) throws Exception {
         http
+                // Enable CSRF except for H2 console
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/h2-console/**")
                 )
+                // Configure which web endpoints are public, restricted, or require authentication
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
@@ -87,22 +114,27 @@ public class SecurityConfig {
                                 "/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
-                        ).permitAll()
-                        .requestMatchers("/staff/**").hasAnyRole("STAFF")
-                        .anyRequest().authenticated()
+                        ).permitAll() // Allow unauthenticated access to these endpoints
+                        .requestMatchers("/staff/**").hasAnyRole("STAFF") // Restrict /staff/** to STAFF role
+                        .anyRequest().authenticated() // All other requests require authentication
                 )
+                // Use session if required (for web logins)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                // Configure custom login page and default success URL
                 .formLogin(form -> form
                         .loginPage("/login")
                         .permitAll()
                         .defaultSuccessUrl("/dashboard", true)
                 )
+                // Configure logout URL and redirect
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
                         .permitAll()
                 )
+                // Handle access denied exceptions
                 .exceptionHandling(ex -> ex.accessDeniedPage("/access-denied"))
+                // Allow frames for H2 console
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
